@@ -3,17 +3,18 @@ from rest_framework import serializers
 from job.models import Job, File, Mutation
 
 
-class FileSerializer(serializers.ModelSerializer):
-    mutations = serializers.HyperlinkedIdentityField(view_name='api:mutation-detail', many=True, read_only=True)
-
-    class Meta:
-        model = File
-        exclude = ()
-
-
 class MutationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mutation
+        exclude = ()
+        read_only_fields = ('file',)
+
+
+class FileSerializer(serializers.ModelSerializer):
+    mutations = MutationSerializer(many=True, read_only=False)
+
+    class Meta:
+        model = File
         exclude = ()
 
 
@@ -26,7 +27,19 @@ class MutationSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
-    files = serializers.HyperlinkedIdentityField(view_name='api:file-detail', many=True, read_only=True)
+    files = FileSerializer(many=True, read_only=False)
+
+    def create(self, validated_data):
+        files_data = validated_data.pop('files')
+        job = Job.objects.create(**validated_data)
+        for file in files_data:
+            mutations = file.pop('mutations')
+            new_file = File.objects.create(job=job, **file)
+            for mutation in mutations:
+                new_mutation = Mutation.objects.create(file=new_file, **mutation)
+                new_file.mutations.add(new_mutation)
+            job.files.add(new_file)
+        return job
 
     class Meta:
         model = Job

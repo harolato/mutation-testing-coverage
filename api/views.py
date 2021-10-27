@@ -6,15 +6,18 @@ from job.models import Job, File, Mutation
 
 
 class JobViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post']
     queryset = Job.objects.all()
     serializer_class = JobSerializer
 
 
 class FileViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get']
     queryset = File.objects.all()
     serializer_class = FileSerializer
 
 
 class MutationViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get']
     queryset = Mutation.objects.all()
     serializer_class = MutationSerializer

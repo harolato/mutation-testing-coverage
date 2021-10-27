@@ -10,7 +10,7 @@ class FileInline(admin.StackedInline):
 
 
 class JobAdmin(admin.ModelAdmin):
-    list_display = ('hash', 'pull_request_id')
+    exclude = ()
     inlines = [FileInline]
 
 
