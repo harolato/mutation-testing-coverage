@@ -1,7 +1,9 @@
 from django.contrib import admin
 
 # Register your models here.
-from job.models import Job, File, Mutation
+from django.contrib.auth.models import User
+
+from job.models import Job, File, Mutation, Project, Token
 
 
 class FileInline(admin.StackedInline):
@@ -19,8 +21,23 @@ class MutationInline(admin.StackedInline):
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ('path', 'hash', 'mutations')
+    list_display = ('path', 'hash')
     inlines = [MutationInline]
+
+
+class TokensInline(admin.StackedInline):
+    show_change_link = True
+    model = Token
+
+
+class JobsInline(admin.StackedInline):
+    show_change_link = True
+    model = Job
+
+
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'git_repo_owner', 'git_repo_name', 'user')
+    inlines = [JobsInline, TokensInline]
 
 
 class MutationAdmin(admin.ModelAdmin):
@@ -29,4 +46,4 @@ class MutationAdmin(admin.ModelAdmin):
 
 admin.site.register(Job, JobAdmin)
 admin.site.register(File, FileAdmin)
-# admin.site.register(Mutation, MutationAdmin)
+admin.site.register(Project, ProjectAdmin)

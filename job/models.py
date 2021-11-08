@@ -1,8 +1,52 @@
+import base64
+import hashlib
+from datetime import datetime, timedelta
+
+from django.contrib.auth.models import User
 from django.db import models
 
-
 # Create your models here.
+from django.utils import timezone
+
 from config.utils import Timestampable
+
+
+class Project(Timestampable):
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    git_repo_owner = models.CharField(max_length=255)
+    git_repo_name = models.CharField(max_length=255)
+
+    user = models.ForeignKey(User, related_name='project_user', on_delete=models.CASCADE, default=1)
+
+    class Meta:
+        db_table = 'project'
+
+    def __str__(self):
+        return self.name
+
+
+class Token(Timestampable):
+    def generate_token(self):
+        string = base64.standard_b64encode(
+            bytes(datetime.now().strftime("%c") + str(self.user.id) + str(self.project.id)))
+        return
+
+    project = models.ForeignKey(Project, related_name='project_tokens', on_delete=models.CASCADE, default=1)
+    user = models.ForeignKey(User, related_name='user_tokens', on_delete=models.CASCADE, default=1)
+    name = models.CharField(max_length=255)
+    token = models.TextField(blank=True)
+    expire_at = models.DateTimeField(default=timezone.now() + timedelta(days=60))
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            key_string = bytes(datetime.now().strftime("%c") + str(self.user.id) + str(self.project.id),
+                               encoding='utf8')
+            self.token = hashlib.sha256(base64.standard_b64encode(key_string)).hexdigest()
+        super(Token, self).save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'project_token'
 
 
 class Job(Timestampable):
@@ -11,8 +55,13 @@ class Job(Timestampable):
     service_job_id = models.CharField(max_length=255)
     test_cases = models.JSONField(null=True, blank=True, default=dict)
 
+    project = models.ForeignKey(Project, related_name='project', on_delete=models.CASCADE, default=1)
+
     class Meta:
         db_table = 'job'
+
+    def __str__(self):
+        return self.git_commit_sha
 
 
 class File(Timestampable):
@@ -20,10 +69,12 @@ class File(Timestampable):
     path = models.CharField(max_length=255)
 
     job = models.ForeignKey('Job', related_name='files', on_delete=models.CASCADE, null=True)
-    # mutations = models.ForeignKey('Mutation', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'file'
+
+    def __str__(self):
+        return self.path
 
 
 class Mutation(Timestampable):

@@ -30,6 +30,9 @@ class JobSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=False)
 
     def create(self, validated_data):
+        token = self.context['request'].auth
+        project = token.project
+        validated_data['project'] = project
         files_data = validated_data.pop('files')
         job = Job.objects.create(**validated_data)
         for file in files_data:
