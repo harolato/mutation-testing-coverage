@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     # Internal apps
     'job.apps.JobConfig',
     'api.apps.ApiConfig',
-    'homepage.apps.HomepageConfig'
+    'homepage.apps.HomepageConfig',
+    'frontend.apps.FrontendConfig'
 ]
 
 REST_FRAMEWORK = {
