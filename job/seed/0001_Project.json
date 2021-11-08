@@ -1,0 +1,10 @@
+[
+  {
+    "model": "job.project",
+    "pk": 1,
+    "fields": {
+      "name" : "test",
+      "description": "TEST"
+    }
+  }
+]

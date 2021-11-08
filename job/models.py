@@ -12,10 +12,10 @@ from config.utils import Timestampable
 
 
 class Project(Timestampable):
-    name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
-    git_repo_owner = models.CharField(max_length=255)
-    git_repo_name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=255, blank=True)
+    git_repo_owner = models.CharField(max_length=255, blank=True)
+    git_repo_name = models.CharField(max_length=255, blank=True)
 
     user = models.ForeignKey(User, related_name='project_user', on_delete=models.CASCADE, default=1)
 
