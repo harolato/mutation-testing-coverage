@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from job.models import Job, File, Mutation
+from job.models import Job, File, Mutation, Project
 
 
 class MutationSerializer(serializers.ModelSerializer):
@@ -26,6 +26,12 @@ class FileSerializer(serializers.ModelSerializer):
 #         exclude = ()
 
 
+class BasicJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        exclude = ()
+
+
 class JobSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=False)
 
@@ -47,3 +53,11 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         exclude = ()
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    # job_project = BasicJobSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Project
+        fields = '__all__'

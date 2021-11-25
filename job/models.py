@@ -55,7 +55,7 @@ class Job(Timestampable):
     service_job_id = models.CharField(max_length=255)
     test_cases = models.JSONField(null=True, blank=True, default=dict)
 
-    project = models.ForeignKey(Project, related_name='project', on_delete=models.CASCADE, default=1)
+    project = models.ForeignKey(Project, related_name='job_project', on_delete=models.CASCADE, default=1)
 
     class Meta:
         db_table = 'job'
