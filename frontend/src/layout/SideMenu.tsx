@@ -48,7 +48,7 @@ export default class SideMenu extends React.Component<any, any> {
                     </ListItem>
                     <Divider/>
                     <ListItem>
-                        <ListItemButton component={"a"} href={"/logout"}>
+                        <ListItemButton component={"a"} href={"/logout/"}>
                             <ListItemIcon>
                                 <Logout/>
                             </ListItemIcon>
