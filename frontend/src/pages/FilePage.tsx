@@ -4,6 +4,7 @@ import {File} from "../types/File";
 import {Mutation} from "../types/Mutation";
 import {Project} from "../types/Project";
 import {Job} from "../types/Job";
+import CodeEditor from "../components/CodeEditor";
 
 type FileState = {
     file: File
@@ -44,7 +45,8 @@ class FilePage extends React.Component<any, FileState> {
 
     render = () =>
         <>
-            <Typography>Recent builds</Typography>
+            <Typography>File: {this.state.file ? this.state.file.path : <></>}</Typography>
+            {this.state.file ? <CodeEditor file={this.state.file}></CodeEditor> : <></>}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>

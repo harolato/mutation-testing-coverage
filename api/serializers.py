@@ -1,3 +1,6 @@
+import re
+
+from pytz import unicode
 from rest_framework import serializers
 import requests
 from job.models import Job, File, Mutation, Project
@@ -19,8 +22,14 @@ class FileSerializer(serializers.ModelSerializer):
         project = job.project
         url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{obj.path}"
         response = requests.get(url)
+
         if response.status_code == 200:
-            return response.content
+            source_code = response.content.decode("utf-8")
+
+            return {
+                'source': source_code,
+                'total_lines': source_code.count("\n")
+            }
         return ''
 
     class Meta:

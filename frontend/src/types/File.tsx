@@ -1,5 +1,6 @@
 import {Mutation} from "./Mutation";
 import {Job} from "./Job";
+import {SourceCode} from "./SourceCode";
 
 export type File = {
     id: number;
@@ -8,5 +9,6 @@ export type File = {
     hash: Date;
     created_at: Date;
     updated_at: Date;
+    source_code: SourceCode;
     mutations: Mutation[]
 }

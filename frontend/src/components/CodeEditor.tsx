@@ -9,15 +9,17 @@ import IStandaloneEditorConstructionOptions = editor.IStandaloneEditorConstructi
 import IEditorMouseEvent = editor.IEditorMouseEvent;
 import ICodeEditor = editor.ICodeEditor;
 import IModelDeltaDecoration = editor.IModelDeltaDecoration;
+import {Mutation} from "../types/Mutation";
+import {File} from "../types/File";
 
 
 interface CodeEditorProps {
-    file: any
+    file: File
 }
 
 interface OpenDialogFileLine {
     line_number: number,
-    mutations: any[]
+    mutations: Mutation[]
 }
 
 interface CodeEditorState {
@@ -27,8 +29,6 @@ interface CodeEditorState {
 
 export default class CodeEditor extends Component<CodeEditorProps, CodeEditorState> {
 
-    private readonly source_code: any;
-    private mutations: any;
     private readonly options: IStandaloneEditorConstructionOptions;
     private readonly lines: any;
     private current_line: any;
@@ -43,7 +43,6 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                 mutations: []
             }
         }
-        this.source_code = JSON.parse(document.getElementById('source_code_js').textContent);
         this.options = {
             lineNumbers: (number: number) => {
                 return "" + number;
@@ -83,9 +82,14 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
 
     private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
         let decorations: IModelDeltaDecoration[] = [];
-
         _.forEach(this.lines, (value: any, key: any) => {
             _.forEach(value, (val) => {
+                if (
+                    val.start_line > editor.getModel().getLineCount() ||
+                    val.end_line > editor.getModel().getLineCount()
+                ) {
+                    return false;
+                }
                 let decoration: IModelDeltaDecoration = {
                     range: new monaco.Range(val.start_line, 1, val.end_line, 1),
                     options: {
@@ -96,6 +100,12 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                 decorations.push(decoration)
             })
 
+            if (
+                value[0].start_line > editor.getModel().getLineCount() ||
+                value[0].end_line > editor.getModel().getLineCount()
+            ) {
+                return false;
+            }
             // Add a content widget (scrolls inline with text)
             let contentWidget = {
                 getId: function () {
@@ -135,7 +145,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                 width="50%"
                 options={this.options}
                 defaultLanguage="javascript"
-                defaultValue={this.source_code}
+                defaultValue={this.props.file.source_code.source}
                 onMount={this.handleEditorDidMount}
             />
             <Dialog
