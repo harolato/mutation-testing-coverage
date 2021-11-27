@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+import requests
 from job.models import Job, File, Mutation, Project
 
 
@@ -12,6 +12,16 @@ class MutationSerializer(serializers.ModelSerializer):
 
 class FileSerializer(serializers.ModelSerializer):
     mutations = MutationSerializer(many=True, read_only=False)
+    source_code = serializers.SerializerMethodField()
+
+    def get_source_code(self, obj: File):
+        job = obj.job
+        project = job.project
+        url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{obj.path}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.content
+        return ''
 
     class Meta:
         model = File

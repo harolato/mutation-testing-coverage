@@ -1,3 +1,5 @@
+import {File} from "./File";
+
 export enum MutationResult {
     Killed = "K",
     Survived = "S",
@@ -6,6 +8,7 @@ export enum MutationResult {
 
 export type Mutation = {
     id: number;
+    file: number | File;
     sequence_number: number;
     description: string;
     created_at: Date;

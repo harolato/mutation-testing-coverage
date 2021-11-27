@@ -45,7 +45,7 @@ class JobPage extends React.Component<any, JobState> {
                             <TableRow key={file.id}>
                                 <TableCell>{file.id}</TableCell>
                                 <TableCell>
-                                    <Link to={`/file/${file.id}`}>
+                                    <Link to={`/project/${this.props.match.params.projectId}/job/${file.job}/file/${file.id}`}>
                                         {file.path}
                                     </Link>
                                 </TableCell>

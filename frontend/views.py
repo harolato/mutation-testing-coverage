@@ -15,9 +15,12 @@ class UserLogin(LoginView):
 
 @login_required
 def index(request, *args, **kwargs):
-    dummy_source = open("dummy.js", "r")
-    file = Project.objects.all()
     return render(request, 'frontend/index.html')
+
+
+# @todo implement fetching source code from github by providing repo name, user and path to file.
+def file_view(request):
+    return ''
 
 
 class UserLogout(LogoutView):

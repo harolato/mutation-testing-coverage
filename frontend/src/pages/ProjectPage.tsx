@@ -44,7 +44,7 @@ class ProjectPage extends React.Component<any, ProjectState> {
                             <TableRow key={job.id}>
                                 <TableCell>{job.id}</TableCell>
                                 <TableCell>
-                                    <Link to={`/job/${job.id}`}>
+                                    <Link to={`/project/${job.project}/job/${job.id}`}>
                                         {job.git_commit_sha}
                                     </Link>
                                 </TableCell>

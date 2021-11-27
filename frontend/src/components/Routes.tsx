@@ -10,11 +10,11 @@ export default class PageRoutes extends React.Component<any, any> {
     render = () =>
         <>
             <Route exact path="/" component={ProjectsPage}/>
-            <Route path={"/projects"} component={ProjectsPage}/>
-            <Route path={"/project/:projectId"} component={ProjectPage}/>
-            <Route path={"/job/:jobId"} component={JobPage}/>
-            <Route path={"/file/:fileId"} component={FilePage}/>
-            <Route path={"/settings"} component={ProfilePage}/>
+            <Route exact path={"/projects"} component={ProjectsPage}/>
+            <Route exact path={"/project/:projectId"} component={ProjectPage}/>
+            <Route exact path={"/project/:projectId/job/:jobId"} component={JobPage}/>
+            <Route exact path={"/project/:projectId/job/:jobId/file/:fileId"} component={FilePage}/>
+            <Route exact path={"/settings"} component={ProfilePage}/>
         </>
     ;
 }
