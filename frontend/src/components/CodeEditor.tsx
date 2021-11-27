@@ -141,8 +141,8 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
     render = () =>
         <>
             <Editor
-                height="90vh"
-                width="50%"
+                height="50vh"
+                width={"50%"}
                 options={this.options}
                 defaultLanguage="javascript"
                 defaultValue={this.props.file.source_code.source}
