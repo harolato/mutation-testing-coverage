@@ -17,10 +17,7 @@ class UserLogin(LoginView):
 def index(request, *args, **kwargs):
     dummy_source = open("dummy.js", "r")
     file = Project.objects.all()
-    return render(request, 'frontend/index.html', {
-        'file': dummy_source.read(),
-        'mutations': ProjectSerializer(file).data
-    })
+    return render(request, 'frontend/index.html')
 
 
 class UserLogout(LogoutView):

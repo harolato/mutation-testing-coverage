@@ -1,10 +1,14 @@
 import * as React from "react";
 import {Avatar, Box, Grid, IconButton, List, ListItem, ListItemAvatar, ListItemText, Typography} from "@mui/material";
-import {Delete, Folder} from "@mui/icons-material";
+import {Folder} from "@mui/icons-material";
+import {Project} from "../types/Project";
+import {Link} from "react-router-dom";
 
-export default class ProjectsPage extends React.Component<any, any> {
-    private projects: any;
+type ProjectsSate = {
+    projects: Project[]
+}
 
+export default class ProjectsPage extends React.Component<any, ProjectsSate> {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -13,7 +17,7 @@ export default class ProjectsPage extends React.Component<any, any> {
     }
     
     componentDidMount() {
-        fetch('/api/v1/projects')
+        fetch('/api/v1/projects/')
             .then(res => res.json())
             .then(res => this.setState({
                 projects: res
@@ -29,11 +33,8 @@ export default class ProjectsPage extends React.Component<any, any> {
                             List of Projects
                         </Typography>
                         <List>
-                            { this.state.projects.map((project: {
-                                description: string;
-                                name: string ;
-                                }, i: React.Key) =>
-                                <ListItem button key={i}>
+                            { this.state.projects.map((project: Project, i: React.Key) =>
+                                <ListItem component={Link} to={`/project/${project.id}`} key={i}>
                                 <ListItemAvatar>
                                     <Avatar>
                                         <Folder/>

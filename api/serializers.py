@@ -56,7 +56,7 @@ class JobSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-    # job_project = BasicJobSerializer(read_only=True, many=True)
+    job_project = BasicJobSerializer(read_only=True, many=True)
 
     class Meta:
         model = Project
