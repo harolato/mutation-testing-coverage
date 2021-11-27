@@ -30,7 +30,10 @@ class FileSerializer(serializers.ModelSerializer):
                 'source': source_code,
                 'total_lines': source_code.count("\n")
             }
-        return ''
+        return {
+            'url': url,
+            'response': response
+        }
 
     class Meta:
         model = File
