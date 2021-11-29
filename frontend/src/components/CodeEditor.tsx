@@ -14,7 +14,7 @@ import {File} from "../types/File";
 
 
 interface CodeEditorProps {
-    file: File
+    file: File,
 }
 
 interface OpenDialogFileLine {
@@ -70,7 +70,6 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
 
     handleViewMutations(e: IEditorMouseEvent) {
         const file_line = this.lines[e.target.detail.split('-')[1]];
-        console.log(file_line[0]);
         this.setState({
             open_line: {
                 line_number: file_line[0].start_line,
@@ -142,7 +141,6 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
         <>
             <Editor
                 height="50vh"
-                width={"50%"}
                 options={this.options}
                 defaultLanguage="javascript"
                 defaultValue={this.props.file.source_code.source}

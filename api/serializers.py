@@ -1,9 +1,21 @@
-import re
-
-from pytz import unicode
 from rest_framework import serializers
 import requests
+from rest_framework.response import Response
+
 from job.models import Job, File, Mutation, Project
+
+
+def get_source_code(file):
+    """
+    Fetch source code from github
+    """
+    job = file.job
+    project = job.project
+    url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{file.path}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.content.decode("utf-8")
+    return False
 
 
 class MutationSerializer(serializers.ModelSerializer):
@@ -14,38 +26,31 @@ class MutationSerializer(serializers.ModelSerializer):
 
 
 class FileSerializer(serializers.ModelSerializer):
-    mutations = MutationSerializer(many=True, read_only=False)
+    mutations = serializers.SerializerMethodField()
     source_code = serializers.SerializerMethodField()
 
+    def get_mutations(self, object: File):
+        source_code = get_source_code(object)
+        split_source = source_code.split('\n')
+        mutations = []
+        for mutation in object.mutations.all():
+            split_source[mutation.start_line - 1] = mutation.mutated_source_code
+            mutation.mutated_source_code = "\n".join(split_source)
+            mutations.append(mutation)
+        return MutationSerializer(mutations, read_only=True, many=True).data
+
     def get_source_code(self, obj: File):
-        job = obj.job
-        project = job.project
-        url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{obj.path}"
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            source_code = response.content.decode("utf-8")
-
+        source_code = get_source_code(obj)
+        if source_code is not False:
             return {
                 'source': source_code,
                 'total_lines': source_code.count("\n")
             }
-        return {
-            'url': url,
-            'response': response
-        }
+        return ""
 
     class Meta:
         model = File
         exclude = ()
-
-
-# class JobFileSerializer(serializers.ModelSerializer):
-#     href =
-#
-#     class Meta:
-#         model = File
-#         exclude = ()
 
 
 class BasicJobSerializer(serializers.ModelSerializer):

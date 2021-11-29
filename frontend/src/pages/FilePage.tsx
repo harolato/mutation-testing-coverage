@@ -1,5 +1,16 @@
 import * as React from "react";
-import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
+import {
+    Box,
+    Grid,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography
+} from "@mui/material";
 import {File} from "../types/File";
 import {Mutation} from "../types/Mutation";
 import {Project} from "../types/Project";
@@ -15,7 +26,7 @@ type FileState = {
 
 class FilePage extends React.Component<any, FileState> {
 
-    constructor(props:any) {
+    constructor(props: any) {
         super(props);
         this.state = {
             file: null,
@@ -46,31 +57,19 @@ class FilePage extends React.Component<any, FileState> {
     render = () =>
         <>
             <Typography>File: {this.state.file ? this.state.file.path : <></>}</Typography>
-            {this.state.file ? <CodeEditor file={this.state.file}></CodeEditor> : <></>}
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell>Sourcecode</TableCell>
-                            <TableCell>Lines</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {this.state.file != null ?this.state.file.mutations.map((mutation: Mutation) =>
-                            <TableRow key={mutation.id}>
-                                <TableCell>{mutation.id}</TableCell>
-                                <TableCell>{mutation.description}</TableCell>
-                                <TableCell>{mutation.mutated_source_code}</TableCell>
-                                <TableCell>{mutation.start_line} - {mutation.end_line}</TableCell>
-                            </TableRow>
-                        ) : <></>}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <Box>
+            </Box>
+            <Grid container spacing={2}>
+                <Grid item xs={6}>
+                    {this.state.file ? <CodeEditor file={this.state.file}></CodeEditor> : <></>}
+                </Grid>
+                <Grid item xs={6}>
+
+                </Grid>
+            </Grid>
         </>
     ;
 }
 
 export default FilePage;
+0
