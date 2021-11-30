@@ -1,9 +1,10 @@
 import {File} from "./File";
+import {SourceCode} from "./SourceCode";
 
 export enum MutationResult {
-    Killed = "K",
-    Survived = "S",
-    Inconsistent = "I"
+    K = "Killed",
+    S = "Survived",
+    I = "Inconsistent"
 }
 
 export type Mutation = {
@@ -16,5 +17,6 @@ export type Mutation = {
     start_line: number;
     end_line: number;
     mutated_source_code: string;
-    result: MutationResult
+    source_code: SourceCode;
+    result: "K" | "S" | "I"
 }

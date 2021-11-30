@@ -1,23 +1,66 @@
 import * as React from "react";
-import * as _ from "lodash";
-import Mutation from "./Mutation";
+import {Mutation, MutationResult} from "../types/Mutation";
+import {
+    Button,
+    IconButton,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow
+} from "@mui/material";
+import {FileOpen} from "@mui/icons-material";
 
 type MutationsViewProps = {
-    mutations: any
+    mutations: Mutation[]
+    onMutationSelected: any
 }
 
-export default class MutationsView extends React.Component<MutationsViewProps, any>{
-    private mutations_elements: any;
-    constructor(props:any) {
+export default class MutationsView extends React.Component<MutationsViewProps, any> {
+    constructor(props: any) {
         super(props);
-        this.mutations_elements = _.map(this.props.mutations, (mutation) => {
-            return <Mutation key={mutation.id} data={mutation}/>;
-        });
+        this.handleChooseMutation = this.handleChooseMutation.bind(this);
     }
+
+    handleChooseMutation(mutation: Mutation) {
+        this.props.onMutationSelected(mutation);
+    }
+
     render = () =>
         <div className={"mutation-view"}>
-            {this.mutations_elements}
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Description</TableCell>
+                            <TableCell>Result</TableCell>
+                            <TableCell>Source</TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {
+                            this.props.mutations.map((mutation) =>
+                                <TableRow key={mutation.id} className={"mutation-view"}>
+                                    <TableCell>Description: {mutation.description}</TableCell>
+                                    <TableCell>{MutationResult[mutation.result]}</TableCell>
+                                    <TableCell>Source: {mutation.mutated_source_code}</TableCell>
+                                    <TableCell>
+                                        <div onClick={(e) => this.handleChooseMutation(mutation)}>
+                                            <IconButton>
+                                                <FileOpen></FileOpen>
+                                            </IconButton>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        }
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
         </div>
     ;
-
 }

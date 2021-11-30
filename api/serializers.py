@@ -1,3 +1,5 @@
+from mimetypes import MimeTypes
+
 from rest_framework import serializers
 import requests
 from rest_framework.response import Response
@@ -5,47 +7,56 @@ from rest_framework.response import Response
 from job.models import Job, File, Mutation, Project
 
 
-def get_source_code(file):
+def get_source_code(file: File):
     """
     Fetch source code from github
     """
     job = file.job
     project = job.project
     url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{file.path}"
+    # mime = MimeTypes()
     response = requests.get(url)
     if response.status_code == 200:
-        return response.content.decode("utf-8")
+        source_code = response.content.decode("utf-8")
+        return {
+            "source": source_code,
+            "total_lines": source_code.count("\n"),
+            # "mime_type": mime.guess_type(url),
+            # "url": url
+        }
     return False
 
 
 class MutationSerializer(serializers.ModelSerializer):
+    source_code = serializers.SerializerMethodField()
+
     class Meta:
         model = Mutation
         exclude = ()
         read_only_fields = ('file',)
 
+    def get_source_code(self, mutation: Mutation):
+        source_code = get_source_code(mutation.file)
+        split_source = []
+        if source_code:
+            split_source = source_code['source'].split('\n')
+        try:
+            split_source[mutation.start_line - 1] = mutation.mutated_source_code
+            tmp_src = source_code
+            tmp_src['source'] = "\n".join(split_source)
+        except IndexError:
+            return ""
+        return tmp_src
+
 
 class FileSerializer(serializers.ModelSerializer):
-    mutations = serializers.SerializerMethodField()
+    mutations = MutationSerializer(read_only=True, many=True)
     source_code = serializers.SerializerMethodField()
-
-    def get_mutations(self, object: File):
-        source_code = get_source_code(object)
-        split_source = source_code.split('\n')
-        mutations = []
-        for mutation in object.mutations.all():
-            split_source[mutation.start_line - 1] = mutation.mutated_source_code
-            mutation.mutated_source_code = "\n".join(split_source)
-            mutations.append(mutation)
-        return MutationSerializer(mutations, read_only=True, many=True).data
 
     def get_source_code(self, obj: File):
         source_code = get_source_code(obj)
-        if source_code is not False:
-            return {
-                'source': source_code,
-                'total_lines': source_code.count("\n")
-            }
+        if source_code:
+            return source_code
         return ""
 
     class Meta:

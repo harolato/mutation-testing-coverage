@@ -15,6 +15,7 @@ import {File} from "../types/File";
 
 interface CodeEditorProps {
     file: File,
+    onLineSelected: any
 }
 
 interface OpenDialogFileLine {
@@ -50,7 +51,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
             minimap: {
                 enabled: false
             },
-            readOnly: true
+            readOnly: true,
         }
 
         this.lines = _.groupBy(this.props.file.mutations, (mutation: any) => {
@@ -69,14 +70,8 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
     }
 
     handleViewMutations(e: IEditorMouseEvent) {
-        const file_line = this.lines[e.target.detail.split('-')[1]];
-        this.setState({
-            open_line: {
-                line_number: file_line[0].start_line,
-                mutations: file_line
-            }
-        })
-        this.setState({'open': true})
+        const mutations: Mutation[] = this.lines[e.target.detail.split('-')[1]];
+        this.props.onLineSelected(mutations);
     }
 
     private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
@@ -142,17 +137,9 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
             <Editor
                 height="50vh"
                 options={this.options}
-                defaultLanguage="javascript"
-                defaultValue={this.props.file.source_code.source}
+                value={this.props.file.source_code.source}
                 onMount={this.handleEditorDidMount}
             />
-            <Dialog
-                open={this.state.open}
-                onClose={this.closeDialog}
-            >
-                <DialogTitle>Mutations on Line: {this.state.open_line.line_number}</DialogTitle>
-                <MutationsView mutations={this.state.open_line.mutations}/>
-            </Dialog>
         </>
     ;
 
