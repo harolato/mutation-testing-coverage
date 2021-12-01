@@ -75,9 +75,6 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
     }
 
     private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
-
-        console.log(JSON.stringify(monaco.languages.getLanguages()))
-
         let decorations: IModelDeltaDecoration[] = [];
         _.forEach(this.lines, (value: any, key: any) => {
             _.forEach(value, (val) => {

@@ -1,5 +1,4 @@
 import json
-import mimetypes
 import os.path
 import re
 
@@ -8,17 +7,20 @@ import requests
 
 from job.models import Job, File, Mutation, Project
 
+
 def get_file_source_language(url):
     json_file = open(os.path.dirname(__file__) + '/../storage/monaco_languages.json')
     data = json.load(json_file)
     json_file.close()
     extension = re.search(r"^.*(\..*)$", url)
-    url_extension = extension.group(1)
-    for file_type in data:
-        for file_extension in file_type['extensions']:
-            if file_extension == url_extension:
-                return file_type
+    if extension:
+        url_extension = extension.group(1)
+        for file_type in data:
+            for file_extension in file_type['extensions']:
+                if file_extension == url_extension:
+                    return file_type
     return data[0]
+
 
 def get_source_code(file: File):
     """
@@ -36,7 +38,11 @@ def get_source_code(file: File):
             "total_lines": source_code.count("\n"),
             "file_type": get_file_source_language(url),
         }
-    return False
+    return {
+            "source": "",
+            "total_lines": 0,
+            "file_type": get_file_source_language(url),
+        }
 
 
 class MutationSerializer(serializers.ModelSerializer):
@@ -88,6 +94,7 @@ class JobSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         token = self.context['request'].auth
         project = token.project
+        validated_data = self.initial_data
         validated_data['project'] = project
         files_data = validated_data.pop('files')
         job = Job.objects.create(**validated_data)
@@ -99,6 +106,9 @@ class JobSerializer(serializers.ModelSerializer):
                 new_file.mutations.add(new_mutation)
             job.files.add(new_file)
         return job
+
+    def validate(self, data):
+        return data
 
     class Meta:
         model = Job
