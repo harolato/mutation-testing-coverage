@@ -1,8 +1,5 @@
-from mimetypes import MimeTypes
-
 from rest_framework import serializers
 import requests
-from rest_framework.response import Response
 
 from job.models import Job, File, Mutation, Project
 
@@ -36,7 +33,7 @@ class MutationSerializer(serializers.ModelSerializer):
         read_only_fields = ('file',)
 
     def get_source_code(self, mutation: Mutation):
-        source_code = get_source_code(mutation.file)
+        source_code = self.context.get('source_code_str')
         split_source = []
         if source_code:
             split_source = source_code['source'].split('\n')
@@ -50,13 +47,19 @@ class MutationSerializer(serializers.ModelSerializer):
 
 
 class FileSerializer(serializers.ModelSerializer):
-    mutations = MutationSerializer(read_only=True, many=True)
+    source_code_str = None
     source_code = serializers.SerializerMethodField()
+    mutations = serializers.SerializerMethodField()
+
+    def get_mutations(self, obj):
+        serializer = MutationSerializer(instance=obj.mutations, read_only=True, many=True,
+                                        context={'source_code_str': self.source_code_str})
+        return serializer.data
 
     def get_source_code(self, obj: File):
-        source_code = get_source_code(obj)
-        if source_code:
-            return source_code
+        self.source_code_str = get_source_code(obj)
+        if self.source_code_str:
+            return self.source_code_str
         return ""
 
     class Meta:
@@ -90,6 +93,7 @@ class JobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Job
+        depth = 1
         exclude = ()
 
 
