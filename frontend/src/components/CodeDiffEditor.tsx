@@ -55,6 +55,7 @@ export default class CodeDiffEditor extends Component<CodeDiffEditorProps, CodeD
             <DiffEditor
                 original={this.props.original.source}
                 modified={this.props.mutated.source}
+                language={this.props.original.file_type.id}
                 height="50vh"
                 options={this.options}
                 onMount={this.handleDiffEditorDidMount}

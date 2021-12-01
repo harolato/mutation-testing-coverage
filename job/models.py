@@ -17,7 +17,7 @@ class Project(Timestampable):
     git_repo_owner = models.CharField(max_length=255, blank=True)
     git_repo_name = models.CharField(max_length=255, blank=True)
 
-    user = models.ForeignKey(User, related_name='project_user', on_delete=models.CASCADE, default=1)
+    user = models.OneToOneField(User, related_name='project_user', on_delete=models.CASCADE, default=1)
 
     class Meta:
         db_table = 'project'
@@ -27,13 +27,8 @@ class Project(Timestampable):
 
 
 class Token(Timestampable):
-    def generate_token(self):
-        string = base64.standard_b64encode(
-            bytes(datetime.now().strftime("%c") + str(self.user.id) + str(self.project.id)))
-        return
-
-    project = models.ForeignKey(Project, related_name='project_tokens', on_delete=models.CASCADE, default=1)
-    user = models.ForeignKey(User, related_name='user_tokens', on_delete=models.CASCADE, default=1)
+    project = models.OneToOneField(Project, related_name='project_tokens', on_delete=models.CASCADE, default=1)
+    user = models.OneToOneField(User, related_name='user_tokens', on_delete=models.CASCADE, default=1)
     name = models.CharField(max_length=255)
     token = models.TextField(blank=True)
     expire_at = models.DateTimeField(default=timezone.now() + timedelta(days=60))
@@ -53,9 +48,9 @@ class Job(Timestampable):
     git_commit_sha = models.CharField(max_length=255)
     service_name = models.CharField(max_length=255)
     service_job_id = models.CharField(max_length=255)
-    test_cases = models.JSONField(null=True, blank=True, default=dict)
+    test_cases = models.JSONField(null=True, blank=True, default=list)
 
-    project = models.ForeignKey(Project, related_name='job_project', on_delete=models.CASCADE, default=1)
+    project = models.ForeignKey(Project, related_name='project_jobs', on_delete=models.CASCADE, default=1)
 
     class Meta:
         db_table = 'job'

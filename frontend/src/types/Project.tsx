@@ -8,5 +8,5 @@ export type Project = {
     updated_at: Date;
     git_repo_owner: string;
     git_repo_name: string;
-    job_project: Job[]
+    jobs: Job[]
 }

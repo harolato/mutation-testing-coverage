@@ -4,10 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render
 
-# Create your views here.
-from api.serializers import ProjectSerializer
-from job.models import Project
-
 
 class UserLogin(LoginView):
     template_name = 'frontend/login.html'

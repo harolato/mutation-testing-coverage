@@ -1,11 +1,14 @@
 # Create your views here.
-from django.db.models import Q
-from rest_framework import viewsets, request
+from django.contrib.auth.models import User
+
+from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from api.authentication import SimpleTokenAuth, SimpleTokenAuthIsAuthenticated
-from api.serializers import JobSerializer, FileSerializer, MutationSerializer, ProjectSerializer
+from api.authentication import SimpleTokenAuth
+from api.serializers import JobSerializer, BasicFileSerializer, \
+    ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer
 from job.models import Job, File, Mutation, Project
 
 
@@ -16,8 +19,15 @@ class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        job = self.get_object()
+        return Response(BasicJobSerializer(instance=job).data)
+
 
 class FileViewSet(viewsets.ModelViewSet):
+    authentication_classes = (SessionAuthentication, SimpleTokenAuth)
+    permission_classes = [IsAuthenticated]
+
     http_method_names = ['get']
     queryset = File.objects.all()
     serializer_class = FileSerializer
@@ -29,13 +39,20 @@ class MutationViewSet(viewsets.ModelViewSet):
     serializer_class = MutationSerializer
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
-    authentication_classes = (SessionAuthentication,)
+class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = (SessionAuthentication, SimpleTokenAuth)
     permission_classes = [IsAuthenticated]
+
     http_method_names = ['get']
-    serializer_class = ProjectSerializer
+    serializer_class = ListProjectSerializer
     queryset = Project.objects.all()
 
     def get_queryset(self):
-        user = self.request.user
-        return Project.objects.filter(user=user)
+        user: User = self.request.user
+        if user.id:
+            return Project.objects.filter(user=user)
+        return None
+
+    def retrieve(self, request, *args, **kwargs):
+        project = self.get_object()
+        return Response(DetailProjectSerializer(instance=project).data)

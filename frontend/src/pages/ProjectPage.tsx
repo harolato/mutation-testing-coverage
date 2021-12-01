@@ -40,7 +40,7 @@ class ProjectPage extends React.Component<any, ProjectState> {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {this.state.project != null ?this.state.project.job_project.map((job: Job) =>
+                        {this.state.project != null ?this.state.project.jobs.map((job: Job) =>
                             <TableRow key={job.id}>
                                 <TableCell>{job.id}</TableCell>
                                 <TableCell>

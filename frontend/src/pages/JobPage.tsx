@@ -49,7 +49,7 @@ class JobPage extends React.Component<any, JobState> {
                                         {file.path}
                                     </Link>
                                 </TableCell>
-                                <TableCell>{file.mutations.length}</TableCell>
+                                <TableCell>{file.total_mutations}</TableCell>
                                 <TableCell>{file.created_at}</TableCell>
                             </TableRow>
                         ) : <></>}

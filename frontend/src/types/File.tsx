@@ -9,6 +9,7 @@ export type File = {
     hash: Date;
     created_at: Date;
     updated_at: Date;
-    source_code: SourceCode;
+    source_code?: SourceCode;
     mutations: Mutation[]
+    total_mutations: number
 }

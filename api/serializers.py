@@ -1,8 +1,24 @@
+import json
+import mimetypes
+import os.path
+import re
+
 from rest_framework import serializers
 import requests
 
 from job.models import Job, File, Mutation, Project
 
+def get_file_source_language(url):
+    json_file = open(os.path.dirname(__file__) + '/../storage/monaco_languages.json')
+    data = json.load(json_file)
+    json_file.close()
+    extension = re.search(r"^.*(\..*)$", url)
+    url_extension = extension.group(1)
+    for file_type in data:
+        for file_extension in file_type['extensions']:
+            if file_extension == url_extension:
+                return file_type
+    return data[0]
 
 def get_source_code(file: File):
     """
@@ -11,15 +27,14 @@ def get_source_code(file: File):
     job = file.job
     project = job.project
     url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{file.path}"
-    # mime = MimeTypes()
+
     response = requests.get(url)
     if response.status_code == 200:
         source_code = response.content.decode("utf-8")
         return {
             "source": source_code,
             "total_lines": source_code.count("\n"),
-            # "mime_type": mime.guess_type(url),
-            # "url": url
+            "file_type": get_file_source_language(url),
         }
     return False
 
@@ -67,12 +82,6 @@ class FileSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
-class BasicJobSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Job
-        exclude = ()
-
-
 class JobSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=False)
 
@@ -93,13 +102,46 @@ class JobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Job
-        depth = 1
         exclude = ()
 
 
-class ProjectSerializer(serializers.ModelSerializer):
-    job_project = BasicJobSerializer(read_only=True, many=True)
+class BasicMutationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mutation
+        fields = ('id', 'result')
+
+
+class BasicFileSerializer(serializers.ModelSerializer):
+    total_mutations = serializers.SerializerMethodField()
+
+    def get_total_mutations(self, obj: File):
+        return obj.mutations.count()
+
+    class Meta:
+        model = File
+        exclude = ()
+
+
+class BasicJobSerializer(serializers.ModelSerializer):
+    files = BasicFileSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Job
+        exclude = ()
+
+
+class ListProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        exclude = ()
+
+
+class DetailProjectSerializer(serializers.ModelSerializer):
+    jobs = serializers.SerializerMethodField()
+
+    def get_jobs(self, obj: Project):
+        return BasicJobSerializer(instance=obj.project_jobs, many=True, read_only=True).data
 
     class Meta:
         model = Project
-        fields = '__all__'
+        exclude = ()

@@ -75,6 +75,9 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
     }
 
     private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
+
+        console.log(JSON.stringify(monaco.languages.getLanguages()))
+
         let decorations: IModelDeltaDecoration[] = [];
         _.forEach(this.lines, (value: any, key: any) => {
             _.forEach(value, (val) => {
@@ -137,6 +140,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
             <Editor
                 height="50vh"
                 options={this.options}
+                language={this.props.file.source_code.file_type.id}
                 value={this.props.file.source_code.source}
                 onMount={this.handleEditorDidMount}
             />
