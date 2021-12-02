@@ -60,7 +60,7 @@ class MutationSerializer(serializers.ModelSerializer):
             split_source = source_code['source'].split('\n')
         try:
             split_source[mutation.start_line - 1] = mutation.mutated_source_code
-            tmp_src = source_code
+            tmp_src = source_code.copy()
             tmp_src['source'] = "\n".join(split_source)
         except IndexError:
             return ""
