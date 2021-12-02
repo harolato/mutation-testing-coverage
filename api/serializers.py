@@ -65,7 +65,6 @@ class MutationSerializer(serializers.ModelSerializer):
             if mutation.end_line > mutation.start_line:
                 mutated_source_array = mutation.mutated_source_code.split('\n')
                 diff = mutation.end_line - mutation.start_line
-                start_line += 1     # @todo - fix incorrect line bug
                 for line_no in range(diff):
                     split_source[start_line + line_no] = mutated_source_array[line_no]
             else:
