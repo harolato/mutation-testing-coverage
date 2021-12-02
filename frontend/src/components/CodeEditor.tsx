@@ -1,7 +1,7 @@
 import {Component} from "react";
 import Editor, {Monaco} from "@monaco-editor/react";
 import * as React from "react";
-import {Dialog, DialogTitle} from "@mui/material";
+import {Chip, Dialog, DialogTitle, Stack} from "@mui/material";
 import MutationsView from "./MutationsView";
 import * as _ from "lodash";
 import {editor} from "monaco-editor";
@@ -11,6 +11,8 @@ import ICodeEditor = editor.ICodeEditor;
 import IModelDeltaDecoration = editor.IModelDeltaDecoration;
 import {Mutation} from "../types/Mutation";
 import {File} from "../types/File";
+import * as ReactDOM from "react-dom";
+import ScienceIcon from '@mui/icons-material/Science';
 
 
 interface CodeEditorProps {
@@ -34,6 +36,8 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
     private readonly lines: any;
     private current_line: any;
     private dialog_title: any;
+
+    private chip: any
 
     constructor(props: CodeEditorProps) {
         super(props);
@@ -63,20 +67,48 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
 
         this.handleViewMutations = this.handleViewMutations.bind(this);
         this.closeDialog = this.closeDialog.bind(this);
+        this.chip = this.renderChip.bind(this);
+    }
+
+    renderChip(mutations: Mutation[]) {
+        let el = document.createElement('div');
+        el.className = 'content-widget'
+        const chipElement = (
+            <>
+            <Stack direction="row" spacing={1}>
+              <Chip
+                  onClick={() => this.handleViewMutations(mutations)}
+                  label={`${mutations.length}`}
+                  component="a"
+                  href="#basic-chip"
+                  clickable
+                  size={"small"}
+                  icon={<ScienceIcon/>}
+                  color={"warning"}
+                  sx={{
+                      height: '18px'
+                  }}
+              />
+            </Stack>
+            </>
+        );
+        ReactDOM.render(chipElement, el)
+
+        return el;
     }
 
     closeDialog() {
         this.setState({open: false});
     }
 
-    handleViewMutations(e: IEditorMouseEvent) {
-        const mutations: Mutation[] = this.lines[e.target.detail.split('-')[1]];
+    handleViewMutations(mutations: Mutation[]) {
         this.props.onLineSelected(mutations);
     }
 
     private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
         let decorations: IModelDeltaDecoration[] = [];
         _.forEach(this.lines, (value: any, key: any) => {
+            let vm = this
             _.forEach(value, (val) => {
                 if (
                     val.start_line > editor.getModel().getLineCount() ||
@@ -88,7 +120,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                     range: new monaco.Range(val.start_line, 1, val.end_line, 1),
                     options: {
                         className: 'myContentClass',
-                        isWholeLine: true,
+                        isWholeLine: true
                     }
                 }
                 decorations.push(decoration)
@@ -107,9 +139,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                 },
                 getDomNode: function () {
                     if (!this.domNode) {
-                        this.domNode = document.createElement('div');
-                        this.domNode.className = 'content-widget'
-                        this.domNode.innerHTML = 'x' + value.length + ' mutations';
+                        this.domNode = vm.chip(value)
                     }
                     return this.domNode;
                 },
@@ -117,7 +147,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                     return {
                         position: {
                             lineNumber: value[0].start_line,
-                            column: editor.getModel().getLineLength(value[0].start_line) + 1
+                            column: 0
                         },
                         preference: [
                             monaco.editor.ContentWidgetPositionPreference.EXACT,
@@ -129,7 +159,6 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
             editor.addContentWidget(contentWidget);
         });
         editor.deltaDecorations([], decorations);
-        editor.onMouseDown(this.handleViewMutations)
     };
 
     render = () =>

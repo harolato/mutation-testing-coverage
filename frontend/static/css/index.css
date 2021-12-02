@@ -2,12 +2,12 @@
 	background: red;
 }
 .myContentClass {
-	background: lightgreen;
+	background: rgba(0,255,0, 0.3);
+}
+
+.contentWidgets {
 }
 
 .content-widget {
-	width: 300px;
-    font-size: 12px;
-    color: #555;
-	padding-top: 1px;
+	left: 670px !important;
 }

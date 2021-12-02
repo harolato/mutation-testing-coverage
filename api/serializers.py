@@ -63,10 +63,14 @@ class MutationSerializer(serializers.ModelSerializer):
             tmp_src['changed'] = []
             start_line = mutation.start_line - 1  # starts counting from zero
             if mutation.end_line > mutation.start_line:
+                start_line += 1
                 mutated_source_array = mutation.mutated_source_code.split('\n')
-                diff = mutation.end_line - mutation.start_line
-                for line_no in range(diff):
-                    split_source[start_line + line_no] = mutated_source_array[line_no]
+                for line_no in range(len(mutated_source_array)):
+                    tab_count = split_source[start_line + line_no].count('\t')
+                    to_replace = mutated_source_array[line_no].lstrip()
+                    for i in range(tab_count):
+                        to_replace = '\t' + to_replace
+                    split_source[start_line + line_no] = to_replace
             else:
                 split_source[start_line] = mutation.mutated_source_code
 
