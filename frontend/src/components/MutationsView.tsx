@@ -37,6 +37,7 @@ export default class MutationsView extends React.Component<MutationsViewProps, a
                             <TableCell>Description</TableCell>
                             <TableCell>Result</TableCell>
                             <TableCell>Source</TableCell>
+                            <TableCell>Line</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                     </TableHead>
@@ -47,6 +48,13 @@ export default class MutationsView extends React.Component<MutationsViewProps, a
                                     <TableCell>Description: {mutation.description}</TableCell>
                                     <TableCell>{MutationResult[mutation.result]}</TableCell>
                                     <TableCell>Source: {mutation.mutated_source_code}</TableCell>
+                                    <TableCell>
+                                        {
+                                            mutation.start_line != mutation.end_line ?
+                                                `${mutation.start_line}-${mutation.end_line}` :
+                                                mutation.start_line
+                                        }
+                                    </TableCell>
                                     <TableCell>
                                         <div onClick={(e) => this.handleChooseMutation(mutation)}>
                                             <IconButton>

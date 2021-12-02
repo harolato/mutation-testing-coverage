@@ -59,8 +59,18 @@ class MutationSerializer(serializers.ModelSerializer):
         if source_code:
             split_source = source_code['source'].split('\n')
         try:
-            split_source[mutation.start_line - 1] = mutation.mutated_source_code
             tmp_src = source_code.copy()
+            tmp_src['changed'] = []
+            start_line = mutation.start_line - 1  # starts counting from zero
+            if mutation.end_line > mutation.start_line:
+                mutated_source_array = mutation.mutated_source_code.split('\n')
+                diff = mutation.end_line - mutation.start_line
+                start_line += 1     # @todo - fix incorrect line bug
+                for line_no in range(diff):
+                    split_source[start_line + line_no] = mutated_source_array[line_no]
+            else:
+                split_source[start_line] = mutation.mutated_source_code
+
             tmp_src['source'] = "\n".join(split_source)
         except IndexError:
             return ""

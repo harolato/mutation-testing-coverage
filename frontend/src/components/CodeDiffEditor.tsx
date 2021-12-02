@@ -6,7 +6,6 @@ import {SourceCode} from "../types/SourceCode";
 import {Mutation} from "../types/Mutation";
 import IStandaloneDiffEditorConstructionOptions = editor.IStandaloneDiffEditorConstructionOptions;
 import IDiffEditor = editor.IDiffEditor;
-import ScrollType = editor.ScrollType;
 
 
 interface CodeDiffEditorProps {
