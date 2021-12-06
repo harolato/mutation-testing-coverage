@@ -1,5 +1,4 @@
 import * as React from "react";
-import {Component} from "react";
 import {DiffEditor, Monaco} from "@monaco-editor/react";
 import {editor, IRange} from "monaco-editor";
 import {SourceCode} from "../types/SourceCode";
@@ -14,19 +13,9 @@ interface CodeDiffEditorProps {
     mutation: Mutation
 }
 
-interface CodeDiffEditorState {
-}
+const CodeDiffEditor = (props:CodeDiffEditorProps) => {
 
-export default class CodeDiffEditor extends Component<CodeDiffEditorProps, CodeDiffEditorState> {
-
-    private readonly options: IStandaloneDiffEditorConstructionOptions;
-
-    constructor(props: CodeDiffEditorProps) {
-        super(props);
-        this.state = {
-        }
-
-        this.options = {
+    const options:IStandaloneDiffEditorConstructionOptions = {
             lineNumbers: (number: number) => {
                 return "" + number;
             },
@@ -37,29 +26,28 @@ export default class CodeDiffEditor extends Component<CodeDiffEditorProps, CodeD
             renderSideBySide: false,
             enableSplitViewResizing: false
         }
-    }
 
-    private handleDiffEditorDidMount = (editor: IDiffEditor, monaco: Monaco) => {
+    const handleDiffEditorDidMount = (editor: IDiffEditor, monaco: Monaco) => {
         let range: IRange = {
-            startLineNumber: this.props.mutation.start_line,
-            endLineNumber: this.props.mutation.end_line,
+            startLineNumber: props.mutation.start_line,
+            endLineNumber: props.mutation.end_line,
             startColumn: 0,
-            endColumn:0
+            endColumn: 0
         };
         editor.revealRangeInCenter(range);
     };
 
-    render = () =>
+    return(
         <>
             <DiffEditor
-                original={this.props.original.source}
-                modified={this.props.mutated.source}
-                language={this.props.original.file_type.id}
+                original={props.original.source}
+                modified={props.mutated.source}
+                language={props.original.file_type.id}
                 height="50vh"
-                options={this.options}
-                onMount={this.handleDiffEditorDidMount}
+                options={options}
+                onMount={handleDiffEditorDidMount}
             />
-        </>
-    ;
+        </>);
 
 }
+export default CodeDiffEditor

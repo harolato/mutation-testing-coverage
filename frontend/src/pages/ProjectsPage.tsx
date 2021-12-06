@@ -2,29 +2,31 @@ import * as React from "react";
 import {Avatar, Box, Grid, IconButton, List, ListItem, ListItemAvatar, ListItemText, Typography} from "@mui/material";
 import {Folder} from "@mui/icons-material";
 import {Project} from "../types/Project";
-import {Link} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
+import {useEffect, useState} from "react";
+import {RouteParams} from "../components/Routes";
 
 type ProjectsSate = {
     projects: Project[]
 }
 
-export default class ProjectsPage extends React.Component<any, ProjectsSate> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
+const ProjectsPage = () => {
+
+    let initialState:ProjectsSate = {
             projects: []
-        }
-    }
+        };
+    const [state, setState] = useState<ProjectsSate>(initialState);
+    let {projectId} = useParams()
     
-    componentDidMount() {
+    useEffect(() => {
         fetch('/api/v1/projects/')
             .then(res => res.json())
-            .then(res => this.setState({
+            .then(res => setState({
                 projects: res
             }))
-    }
+    }, [])
 
-    render = () =>
+    return(
         <>
             <Box sx={{flexGrow: 1, maxWidth: 752}}>
                 <Grid container spacing={2}>
@@ -33,8 +35,8 @@ export default class ProjectsPage extends React.Component<any, ProjectsSate> {
                             List of Projects
                         </Typography>
                         <List>
-                            { this.state.projects.map((project: Project, i: React.Key) =>
-                                <ListItem component={Link} to={`/project/${project.id}`} key={i}>
+                            { state.projects.map((project: Project, i: React.Key) =>
+                                <ListItem component={Link} to={`/projects/${project.id}`} key={i}>
                                 <ListItemAvatar>
                                     <Avatar>
                                         <Folder/>
@@ -51,5 +53,6 @@ export default class ProjectsPage extends React.Component<any, ProjectsSate> {
                 </Grid>
             </Box>
         </>
-    ;
+    );
 }
+export default ProjectsPage

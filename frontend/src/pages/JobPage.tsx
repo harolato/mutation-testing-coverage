@@ -1,33 +1,35 @@
 import * as React from "react";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
-import {Link} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import {Job} from "../types/Job";
 import {File} from "../types/File";
+import {useEffect, useState} from "react";
+import {RouteParams} from "../components/Routes";
 
 type JobState = {
     job: Job
 }
 
 
-class JobPage extends React.Component<any, JobState> {
+const JobPage = () => {
 
-    constructor(props:any) {
-        super(props);
-        this.state = {
-            job: null
-        }
+    let initialState: JobState = {
+        job: null
     }
 
-    componentDidMount() {
-        fetch(`/api/v1/jobs/${this.props.match.params.jobId}/`)
+    const [state, setJob] = useState(initialState);
+    let {jobId, projectId} = useParams()
+
+    useEffect(() => {
+        fetch(`/api/v1/jobs/${jobId}/`)
             .then(res => res.json())
-            .then(res => this.setState({
+            .then(res => setJob({
                 job: res
             }))
-    }
+    }, []);
 
 
-    render = () =>
+    return (
         <>
             <Typography>Build Files</Typography>
             <TableContainer component={Paper}>
@@ -41,11 +43,12 @@ class JobPage extends React.Component<any, JobState> {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {this.state.job != null ?this.state.job.files.map((file: File) =>
+                        {state.job != null ? state.job.files.map((file: File) =>
                             <TableRow key={file.id}>
                                 <TableCell>{file.id}</TableCell>
                                 <TableCell>
-                                    <Link to={`/project/${this.props.match.params.projectId}/job/${file.job}/file/${file.id}`}>
+                                    <Link
+                                        to={`/projects/${projectId}/jobs/${file.job}/files/${file.id}`}>
                                         {file.path}
                                     </Link>
                                 </TableCell>
@@ -56,8 +59,7 @@ class JobPage extends React.Component<any, JobState> {
                     </TableBody>
                 </Table>
             </TableContainer>
-        </>
-    ;
+        </>);
 }
 
 export default JobPage;

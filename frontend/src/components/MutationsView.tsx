@@ -12,23 +12,37 @@ import {
     TableRow
 } from "@mui/material";
 import {FileOpen} from "@mui/icons-material";
+import {useGlobalState} from "../providers/GlobalStateProvider";
+import {useEffect, useState} from "react";
 
 type MutationsViewProps = {
     mutations: Mutation[]
     onMutationSelected: any
 }
 
-export default class MutationsView extends React.Component<MutationsViewProps, any> {
-    constructor(props: any) {
-        super(props);
-        this.handleChooseMutation = this.handleChooseMutation.bind(this);
+const MutationsView = (props: MutationsViewProps) => {
+
+    const [state, dispatch] = useGlobalState()
+
+    const [mutations, setMutations] = useState<Mutation[]>(props.mutations)
+
+    const handleChooseMutation = (mutation: Mutation) => {
+        props.onMutationSelected(mutation);
     }
 
-    handleChooseMutation(mutation: Mutation) {
-        this.props.onMutationSelected(mutation);
-    }
+    const [viewUpdated, setViewUpdated] = useState(false)
 
-    render = () =>
+    useEffect(() => {
+        let data = props.mutations;
+        if (!state.layout.show_killed_mutants) {
+            data = data.filter((row) => {
+                return row.result !== 'K';
+            });
+        }
+        setMutations(data);
+    }, [state.layout.show_killed_mutants, props.mutations]);
+
+    return (
         <div className={"mutation-view"}>
             <TableContainer component={Paper}>
                 <Table>
@@ -43,7 +57,7 @@ export default class MutationsView extends React.Component<MutationsViewProps, a
                     </TableHead>
                     <TableBody>
                         {
-                            this.props.mutations.map((mutation) =>
+                            mutations.map((mutation) =>
                                 <TableRow key={mutation.id} className={"mutation-view"}>
                                     <TableCell>Description: {mutation.description}</TableCell>
                                     <TableCell>{MutationResult[mutation.result]}</TableCell>
@@ -56,7 +70,7 @@ export default class MutationsView extends React.Component<MutationsViewProps, a
                                         }
                                     </TableCell>
                                     <TableCell>
-                                        <div onClick={(e) => this.handleChooseMutation(mutation)}>
+                                        <div onClick={(e) => handleChooseMutation(mutation)}>
                                             <IconButton>
                                                 <FileOpen></FileOpen>
                                             </IconButton>
@@ -69,6 +83,8 @@ export default class MutationsView extends React.Component<MutationsViewProps, a
                 </Table>
             </TableContainer>
 
-        </div>
-    ;
+        </div>);
 }
+export default MutationsView
+
+

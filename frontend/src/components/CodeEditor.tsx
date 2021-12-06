@@ -1,18 +1,17 @@
-import {Component} from "react";
-import Editor, {Monaco} from "@monaco-editor/react";
 import * as React from "react";
-import {Chip, Dialog, DialogTitle, Stack} from "@mui/material";
-import MutationsView from "./MutationsView";
+import {useState} from "react";
+import Editor, {Monaco} from "@monaco-editor/react";
+import {Chip, Stack} from "@mui/material";
 import * as _ from "lodash";
 import {editor} from "monaco-editor";
-import IStandaloneEditorConstructionOptions = editor.IStandaloneEditorConstructionOptions;
-import IEditorMouseEvent = editor.IEditorMouseEvent;
-import ICodeEditor = editor.ICodeEditor;
-import IModelDeltaDecoration = editor.IModelDeltaDecoration;
 import {Mutation} from "../types/Mutation";
 import {File} from "../types/File";
 import * as ReactDOM from "react-dom";
 import ScienceIcon from '@mui/icons-material/Science';
+import ICodeEditor = editor.ICodeEditor;
+import IModelDeltaDecoration = editor.IModelDeltaDecoration;
+import EditorLayoutInfo = editor.EditorLayoutInfo;
+import IContentWidget = editor.IContentWidget;
 
 
 interface CodeEditorProps {
@@ -20,95 +19,78 @@ interface CodeEditorProps {
     onLineSelected: any
 }
 
-interface OpenDialogFileLine {
-    line_number: number,
-    mutations: Mutation[]
-}
+const CodeEditor = (props: CodeEditorProps) => {
 
-interface CodeEditorState {
-    open: boolean,
-    open_line?: OpenDialogFileLine
-}
+    const options = {
+        automaticLayout: true,
+        lineNumbers: (number: number) => {
+            return "" + number;
+        },
+        minimap: {
+            enabled: false
+        },
+        readOnly: true,
+    };
 
-export default class CodeEditor extends Component<CodeEditorProps, CodeEditorState> {
+    let lines = _.groupBy(props.file.mutations, (mutation: any) => {
+        return mutation.start_line;
+    });
 
-    private readonly options: IStandaloneEditorConstructionOptions;
-    private readonly lines: any;
-    private current_line: any;
-    private dialog_title: any;
-
-    private chip: any
-
-    constructor(props: CodeEditorProps) {
-        super(props);
-        this.state = {
-            open: false,
-            open_line: {
-                line_number: 0,
-                mutations: []
-            }
-        }
-        this.options = {
-            lineNumbers: (number: number) => {
-                return "" + number;
-            },
-            minimap: {
-                enabled: false
-            },
-            readOnly: true,
-        }
-
-        this.lines = _.groupBy(this.props.file.mutations, (mutation: any) => {
-            return mutation.start_line;
-        })
-        this.current_line = null;
-
-        this.dialog_title = "";
-
-        this.handleViewMutations = this.handleViewMutations.bind(this);
-        this.closeDialog = this.closeDialog.bind(this);
-        this.chip = this.renderChip.bind(this);
-    }
-
-    renderChip(mutations: Mutation[]) {
+    const renderChip = (mutations: Mutation[]): HTMLDivElement => {
         let el = document.createElement('div');
-        el.className = 'content-widget'
+        el.className = 'mutation-line-identifier'
+
+        let killed_mutants = mutations.filter((row) => {
+            return row.result === 'K';
+        })
+
+        let kill_rate = (killed_mutants.length * 100) / mutations.length;
+
+
+        let color: "default" | "success" | "warning" | "error" | "primary" | "secondary" | "info" = "success";
+
+        if (kill_rate < 100 && kill_rate > 50) {
+            color = 'warning';
+        } else if (kill_rate <= 50) {
+            color = 'error'
+        }
+
         const chipElement = (
             <>
-            <Stack direction="row" spacing={1}>
-              <Chip
-                  onClick={() => this.handleViewMutations(mutations)}
-                  label={`${mutations.length}`}
-                  component="a"
-                  href="#basic-chip"
-                  clickable
-                  size={"small"}
-                  icon={<ScienceIcon/>}
-                  color={"warning"}
-                  sx={{
-                      height: '18px'
-                  }}
-              />
-            </Stack>
+                <Stack direction="row" spacing={1}>
+                    <Chip
+                        onClick={() => handleViewMutations(mutations)}
+                        label={`${killed_mutants.length}/${mutations.length} (${kill_rate}%)`}
+                        clickable
+                        size={"small"}
+                        icon={<ScienceIcon/>}
+                        color={color}
+                        sx={{
+                            height: '18px'
+                        }}
+                    />
+                </Stack>
             </>
         );
         ReactDOM.render(chipElement, el)
-
         return el;
     }
 
-    closeDialog() {
-        this.setState({open: false});
+    const handleViewMutations = (mutations: Mutation[]) => {
+        props.onLineSelected(mutations);
     }
 
-    handleViewMutations(mutations: Mutation[]) {
-        this.props.onLineSelected(mutations);
+    const updateAllMutationButtonsPosition = (layoutInfo: EditorLayoutInfo) => {
+        let buttons = Array.from(document.getElementsByClassName('mutation-line-identifier') as HTMLCollectionOf<HTMLElement>)
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].style.left = `${layoutInfo.contentWidth - buttons[i].clientWidth + 50}px`;
+        }
     }
 
-    private handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
+    const handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
         let decorations: IModelDeltaDecoration[] = [];
-        _.forEach(this.lines, (value: any, key: any) => {
-            let vm = this
+
+        _.forEach(lines, (value: any, key: any) => {
             _.forEach(value, (val) => {
                 if (
                     val.start_line > editor.getModel().getLineCount() ||
@@ -133,13 +115,17 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                 return false;
             }
             // Add a content widget (scrolls inline with text)
-            let contentWidget = {
+            let contentWidget: IContentWidget = {
+                allowEditorOverflow: true,
+                afterRender() {
+                    updateAllMutationButtonsPosition(editor.getLayoutInfo());
+                },
                 getId: function () {
                     return 'line-' + value[0].start_line;
                 },
                 getDomNode: function () {
                     if (!this.domNode) {
-                        this.domNode = vm.chip(value)
+                        this.domNode = renderChip(value);
                     }
                     return this.domNode;
                 },
@@ -147,7 +133,7 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
                     return {
                         position: {
                             lineNumber: value[0].start_line,
-                            column: 0
+                            column: 0,
                         },
                         preference: [
                             monaco.editor.ContentWidgetPositionPreference.EXACT,
@@ -161,16 +147,16 @@ export default class CodeEditor extends Component<CodeEditorProps, CodeEditorSta
         editor.deltaDecorations([], decorations);
     };
 
-    render = () =>
+    return (
         <>
             <Editor
                 height="50vh"
-                options={this.options}
-                language={this.props.file.source_code.file_type.id}
-                value={this.props.file.source_code.source}
-                onMount={this.handleEditorDidMount}
+                options={options}
+                language={props.file.source_code.file_type.id}
+                value={props.file.source_code.source}
+                onMount={handleEditorDidMount}
             />
-        </>
-    ;
+        </>);
 
 }
+export default CodeEditor

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {
-    Box,
+    Box, Button,
     Grid,
     Typography
 } from "@mui/material";
@@ -11,6 +11,9 @@ import {Job} from "../types/Job";
 import CodeEditor from "../components/CodeEditor";
 import CodeDiffEditor from "../components/CodeDiffEditor";
 import MutationsView from "../components/MutationsView";
+import {useEffect, useState} from "react";
+import {useParams} from "react-router-dom";
+import {RouteParams} from "../components/Routes";
 
 type FileState = {
     file: File
@@ -20,90 +23,105 @@ type FileState = {
     current_mutation: Mutation
 }
 
+const FilePage = () => {
 
-class FilePage extends React.Component<any, FileState> {
-
-    constructor(props: any) {
-        super(props);
-        this.state = {
+    const [filepageState, setFilepageState] = useState<FileState>({
             file: null,
             project: null,
             job: null,
             current_mutation: null,
             selected_line_mutations: []
-        }
-        this.handleLineSelection = this.handleLineSelection.bind(this)
-        this.handleMutationSelection = this.handleMutationSelection.bind(this)
+        });
+
+    let { fileId, projectId, jobId } = useParams();
+
+    const handleMutationSelection = (mutation: Mutation) => {
+        setFilepageState({...filepageState, current_mutation: mutation});
     }
 
-    handleMutationSelection(mutation: Mutation) {
-        this.setState({current_mutation: mutation})
-    }
-
-    handleLineSelection(mutations: Mutation[]) {
-        this.setState({current_mutation: null})
-        this.setState({selected_line_mutations: mutations})
+    const handleLineSelection = (mutations: Mutation[]) => {
+        setFilepageState({...filepageState, current_mutation: null});
+        setFilepageState({...filepageState, selected_line_mutations: mutations});
     }
 
 
-    componentDidMount() {
-        fetch(`/api/v1/files/${this.props.match.params.fileId}/`)
+    useEffect(() => {
+        fetch(`/api/v1/files/${fileId}/`)
             .then(res => res.json())
-            .then(res => this.setState({
+            .then(res => setFilepageState({...filepageState,
                 file: res
             }))
-        fetch(`/api/v1/projects/${this.props.match.params.projectId}/`)
+        fetch(`/api/v1/projects/${projectId}/`)
             .then(res => res.json())
-            .then(res => this.setState({
+            .then(res => setFilepageState({...filepageState,
                 project: res
             }))
-        fetch(`/api/v1/jobs/${this.props.match.params.jobId}/`)
+        fetch(`/api/v1/jobs/${jobId}/`)
             .then(res => res.json())
-            .then(res => this.setState({
+            .then(res => setFilepageState({...filepageState,
                 job: res
             }))
+    }, []);
+
+    const closeLine = () => {
+        setFilepageState({...filepageState,
+            current_mutation: null
+        });
     }
 
+    const closeDiff = () => {
+        setFilepageState({...filepageState,
+            selected_line_mutations : []
+        })
+    }
 
-    render = () =>
+    return(
         <>
-            <Typography>File: {this.state.file ? this.state.file.path : <></>}</Typography>
+            <Typography>File: {filepageState.file ? filepageState.file.path : <></>}</Typography>
             <Box>
             </Box>
             <Grid container spacing={2}>
                 <Grid item xs={6}>
-                    {this.state.file ? <CodeEditor
-                        file={this.state.file}
-                        onLineSelected={this.handleLineSelection}
+                    {filepageState.file ? <CodeEditor
+                        file={filepageState.file}
+                        onLineSelected={handleLineSelection}
                     /> : <></>}
                 </Grid>
                 <Grid item xs={6}>
-                    {this.state.current_mutation ?
+                    {filepageState.current_mutation ?
                         <>
+                            <Button
+                                variant={"contained"}
+                                onClick={() => closeLine()}
+                            >Back</Button>
                             <CodeDiffEditor
-                                original={this.state.file.source_code}
-                                mutated={this.state.current_mutation.source_code}
-                                mutation={this.state.current_mutation}
+                                original={filepageState.file.source_code}
+                                mutated={filepageState.current_mutation.source_code}
+                                mutation={filepageState.current_mutation}
                             />
                             <MutationsView
-                                mutations={[this.state.current_mutation]}
-                                onMutationSelected={this.handleMutationSelection}
+                                mutations={[filepageState.current_mutation]}
+                                onMutationSelected={handleMutationSelection}
                             />
                         </>
                         :
-                        this.state.selected_line_mutations.length > 0 ?
-                            <MutationsView
-                                mutations={this.state.selected_line_mutations}
-                                onMutationSelected={this.handleMutationSelection}
-                            />
+                        filepageState.selected_line_mutations.length > 0 ?
+                            <>
+                                <Button
+                                    variant={"contained"}
+                                    onClick={() => closeDiff()}
+                                >Back</Button>
+                                <MutationsView
+                                    mutations={filepageState.selected_line_mutations}
+                                    onMutationSelected={handleMutationSelection}
+                                />
+                            </>
                             :
                             <></>
                     }
                 </Grid>
             </Grid>
-        </>
-    ;
+        </>);
 }
 
 export default FilePage;
-0

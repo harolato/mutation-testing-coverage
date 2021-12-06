@@ -1,14 +1,12 @@
 import * as React from "react";
 
-export default class ProfilePage extends React.Component<any, any> {
+const ProfilePage = () => {
 
-    constructor(props: any) {
-        super(props);
-    }
-
-    render = () =>
+    return(
         <>
             Profile bla bla
         </>
-    ;
+    );
 }
+
+export default ProfilePage

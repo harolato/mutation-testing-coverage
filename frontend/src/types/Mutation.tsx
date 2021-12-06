@@ -1,5 +1,6 @@
 import {File} from "./File";
 import {SourceCode} from "./SourceCode";
+import {LikeStatus} from "./LikeStatusType";
 
 export enum MutationResult {
     K = "Killed",
@@ -18,5 +19,8 @@ export type Mutation = {
     end_line: number;
     mutated_source_code: string;
     source_code: SourceCode;
-    result: "K" | "S" | "I"
+    result: "K" | "S" | "I",
+    like_status?: LikeStatus
 }
+
+

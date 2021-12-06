@@ -2,7 +2,10 @@ import * as React from "react";
 
 const initialGlobalState = {
     user: "test",
-    counter: 0
+    counter: 0,
+    layout: {
+        show_killed_mutants: false
+    }
 }
 
 const GlobalStateContext = React.createContext(initialGlobalState);
@@ -21,3 +24,8 @@ export const GlobalStateProvider = ({ children } : {children: any}) => {
             </GlobalStateContext.Provider>
         );
     }
+
+export const useGlobalState = () => [
+  React.useContext(GlobalStateContext),
+  React.useContext(DispatchStateContext)
+];

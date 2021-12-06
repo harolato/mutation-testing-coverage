@@ -39,10 +39,10 @@ def get_source_code(file: File):
             "file_type": get_file_source_language(url),
         }
     return {
-            "source": "",
-            "total_lines": 0,
-            "file_type": get_file_source_language(url),
-        }
+        "source": "",
+        "total_lines": 0,
+        "file_type": get_file_source_language(url),
+    }
 
 
 class MutationSerializer(serializers.ModelSerializer):
@@ -63,17 +63,27 @@ class MutationSerializer(serializers.ModelSerializer):
             tmp_src['changed'] = []
             start_line = mutation.start_line - 1  # starts counting from zero
             if mutation.end_line > mutation.start_line:
-                start_line += 1
+                # Split source code string into array
                 mutated_source_array = mutation.mutated_source_code.split('\n')
-                for line_no in range(len(mutated_source_array)):
-                    tab_count = split_source[start_line + line_no].count('\t')
+
+                # Inclusive diff
+                diff = mutation.end_line - mutation.start_line + 1
+                for line_no in range(diff):
+                    if len(mutated_source_array) - 1 < line_no:  # If we cannot map any mutated source to the line,
+                        # remove the line
+                        del split_source[start_line + line_no]
+                        continue
+                    # Logic to copy indentations from line that we're replacing
                     to_replace = mutated_source_array[line_no].lstrip()
+                    tab_count = split_source[start_line + line_no].count('\t')
                     for i in range(tab_count):
                         to_replace = '\t' + to_replace
+                    # ---
+
+                    # Replace the line
                     split_source[start_line + line_no] = to_replace
             else:
                 split_source[start_line] = mutation.mutated_source_code
-
             tmp_src['source'] = "\n".join(split_source)
         except IndexError:
             return ""

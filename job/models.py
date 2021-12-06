@@ -17,7 +17,9 @@ class Project(Timestampable):
     git_repo_owner = models.CharField(max_length=255, blank=True)
     git_repo_name = models.CharField(max_length=255, blank=True)
 
-    user = models.OneToOneField(User, related_name='project_user', on_delete=models.CASCADE)
+    user = models.OneToOneField(User, related_name='project_owner', on_delete=models.DO_NOTHING)
+
+    users = models.ManyToManyField(User, related_name='project_users')
 
     class Meta:
         db_table = 'project'
@@ -86,5 +88,23 @@ class Mutation(Timestampable):
 
     file = models.ForeignKey('File', related_name='mutations', on_delete=models.CASCADE)
 
+    @property
+    def reaction(self):
+        return Reaction.objects.filter(entity_type=self.__class__.__name__, entity_id=self.id).all()
+
     class Meta:
         db_table = 'mutation'
+
+
+class Reaction(Timestampable):
+    entity_type = models.CharField(blank=True, max_length=255)
+    entity_id = models.IntegerField(null=True)
+    user = models.ForeignKey(User, related_name='user_reaction', on_delete=models.DO_NOTHING)
+    result = models.CharField(max_length=2, choices=[
+        ('L', 'Like'),
+        ('D', 'Dislike'),
+        ('I', 'Ignore'),
+    ], default='I')
+
+    class Meta:
+        db_table = 'reaction'
