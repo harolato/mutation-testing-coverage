@@ -2,10 +2,11 @@ import json
 import os.path
 import re
 
+from django.contrib.auth.models import User
 from rest_framework import serializers
 import requests
 
-from job.models import Job, File, Mutation, Project
+from job.models import Job, File, Mutation, Project, Reaction, Profile
 
 
 def get_file_source_language(url):
@@ -45,16 +46,30 @@ def get_source_code(file: File):
     }
 
 
+class ReactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reaction
+        exclude = ('user',)
+
+
 class MutationSerializer(serializers.ModelSerializer):
     source_code = serializers.SerializerMethodField()
+
+    # reactions = serializers.SerializerMethodField()
 
     class Meta:
         model = Mutation
         exclude = ()
         read_only_fields = ('file',)
 
+    # def get_reactions(self, mutation: Mutation):
+    #     a = mutation.reactions_grouped.values('result')
+    #     return ReactionSerializer(mutation.reactions).data
+
     def get_source_code(self, mutation: Mutation):
         source_code = self.context.get('source_code_str')
+        if source_code is None:
+            source_code = get_source_code(mutation.file)
         split_source = []
         if source_code:
             split_source = source_code['source'].split('\n')
@@ -178,3 +193,19 @@ class DetailProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         exclude = ()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        exclude = ()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    user_profile = ProfileSerializer(read_only=True, many=False)
+    project_owner = ListProjectSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'id', 'first_name', 'last_name', 'email', 'date_joined', 'last_login', 'user_profile',
+                  'project_owner')

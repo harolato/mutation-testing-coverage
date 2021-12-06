@@ -1,13 +1,9 @@
 import base64
 import hashlib
 from datetime import datetime, timedelta
-
 from django.contrib.auth.models import User
 from django.db import models
-
-# Create your models here.
 from django.utils import timezone
-
 from config.utils import Timestampable
 
 
@@ -16,16 +12,25 @@ class Project(Timestampable):
     description = models.CharField(max_length=255, blank=True)
     git_repo_owner = models.CharField(max_length=255, blank=True)
     git_repo_name = models.CharField(max_length=255, blank=True)
-
-    user = models.OneToOneField(User, related_name='project_owner', on_delete=models.DO_NOTHING)
-
-    users = models.ManyToManyField(User, related_name='project_users')
+    users = models.ManyToManyField(User, related_name='project_users', through='ProjectMembership')
 
     class Meta:
         db_table = 'project'
 
     def __str__(self):
         return self.name
+
+
+class ProjectMembership(Timestampable):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=2, choices=[
+        ('O', 'Owner'),
+        ('M', 'Member'),
+    ], default='M')
+
+    class Meta:
+        db_table = 'project_user'
 
 
 class Token(Timestampable):
@@ -89,8 +94,13 @@ class Mutation(Timestampable):
     file = models.ForeignKey('File', related_name='mutations', on_delete=models.CASCADE)
 
     @property
-    def reaction(self):
-        return Reaction.objects.filter(entity_type=self.__class__.__name__, entity_id=self.id).all()
+    def reactions(self):
+        return Reaction.objects.filter(entity_type=self.__class__.__name__, entity_id=self.id)
+
+    @property
+    def reactions_grouped(self):
+        q = Reaction.objects.filter(entity_type=self.__class__.__name__, entity_id=self.id)
+        return q
 
     class Meta:
         db_table = 'mutation'
@@ -108,3 +118,11 @@ class Reaction(Timestampable):
 
     class Meta:
         db_table = 'reaction'
+
+
+class Profile(Timestampable):
+    access_token = models.CharField(blank=True, max_length=255)
+    user = models.OneToOneField(User, related_name='user_profile', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'user_profile'

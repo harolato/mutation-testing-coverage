@@ -6,6 +6,7 @@ app_name = 'api'
 
 router = SimpleRouter()
 
+router.register('user', views.UserViewSet)
 router.register('jobs', views.JobViewSet)
 router.register('files', views.FileViewSet)
 router.register('mutations', views.MutationViewSet)

@@ -1,4 +1,5 @@
 import * as React from "react";
+import {useEffect} from "react";
 
 const initialGlobalState = {
     user: "test",
@@ -16,6 +17,9 @@ export const GlobalStateProvider = ({ children } : {children: any}) => {
             (state: any, newValue: any) => ({...state, ...newValue}),
             initialGlobalState
         );
+        useEffect(() => {
+            fetch('')
+        }, [])
         return (
             <GlobalStateContext.Provider value={state}>
                 <DispatchStateContext.Provider value={dispatch}>

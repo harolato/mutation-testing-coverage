@@ -14,6 +14,7 @@ import MutationsView from "../components/MutationsView";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import {RouteParams} from "../components/Routes";
+import ReactionComponent from "../components/ReactionComponent";
 
 type FileState = {
     file: File
@@ -99,6 +100,7 @@ const FilePage = () => {
                                 mutated={filepageState.current_mutation.source_code}
                                 mutation={filepageState.current_mutation}
                             />
+                            <ReactionComponent mutant={filepageState.current_mutation}/>
                             <MutationsView
                                 mutations={[filepageState.current_mutation]}
                                 onMutationSelected={handleMutationSelection}

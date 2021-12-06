@@ -8,7 +8,8 @@ from rest_framework.response import Response
 
 from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, BasicFileSerializer, \
-    ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer
+    ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
+    UserSerializer
 from job.models import Job, File, Mutation, Project
 
 
@@ -37,6 +38,20 @@ class MutationViewSet(viewsets.ModelViewSet):
     http_method_names = ['get']
     queryset = Mutation.objects.all()
     serializer_class = MutationSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    authentication_classes = (SessionAuthentication, )
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get']
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        user: User = self.request.user
+        if user.id:
+            return User.objects.filter(id=user.id)
+        return None
 
 
 class ProjectViewSet(viewsets.ReadOnlyModelViewSet):

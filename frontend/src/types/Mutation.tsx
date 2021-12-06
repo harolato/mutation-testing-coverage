@@ -1,6 +1,6 @@
 import {File} from "./File";
 import {SourceCode} from "./SourceCode";
-import {LikeStatus} from "./LikeStatusType";
+import {ReactionType} from "./ReactionType";
 
 export enum MutationResult {
     K = "Killed",
@@ -20,7 +20,7 @@ export type Mutation = {
     mutated_source_code: string;
     source_code: SourceCode;
     result: "K" | "S" | "I",
-    like_status?: LikeStatus
+    reactions?: ReactionType[]
 }
 
 
