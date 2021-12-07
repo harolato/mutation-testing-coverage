@@ -24,32 +24,28 @@ const ProfilePage = () => {
         }
     }, [state.user])
 
-    let github_profile = <></>
+    let github_profile = <><Box>
+        <Typography variant={"h4"}>
+            Add GitHub Personal Access Token
+        </Typography>
+        <FormControl>
+            <TextField
+                label={"Github Personal Access Token"}
+            />
+        </FormControl>
+    </Box></>
 
     if (state.loading) {
         return (<>Loading</>);
     } else {
-        if (state.user != null && state.user.user_profile != null && !state.user.user_profile.access_token) {
-            github_profile = <><Box>
-                <Typography variant={"h4"}>
-                    GitHub Access Token
-                </Typography>
-                <FormControl>
-                    <TextField
-                        label={"Github Personal Access Token"}
-                    />
-                </FormControl>
-            </Box></>
-        } else {
-            if (githubUser) {
-                github_profile = <>
-                    <Typography variant={"h4"}>Connected GitHub Account</Typography>
-                    <Typography>Name: {githubUser.name}</Typography>
-                    <Typography>Avatar:</Typography> <Avatar variant={"rounded"} src={githubUser.avatar_url}/>
-                    <Typography><Link target={"_blank"} href={githubUser.html_url}>{githubUser.login}</Link></Typography>
-                    <Button variant={"contained"} color={"error"}>Disconnect Account</Button>
-                </>
-            }
+        if (githubUser) {
+            github_profile = <>
+                <Typography variant={"h4"}>Connected GitHub Account</Typography>
+                <Typography>Name: {githubUser.name}</Typography>
+                <Typography>Avatar:</Typography> <Avatar variant={"rounded"} src={githubUser.avatar_url}/>
+                <Typography><Link target={"_blank"} href={githubUser.html_url}>{githubUser.login}</Link></Typography>
+                <Button variant={"contained"} color={"error"}>Disconnect Account</Button>
+            </>
         }
     }
 
