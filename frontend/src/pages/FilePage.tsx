@@ -1,6 +1,6 @@
 import * as React from "react";
 import {
-    Box, Button,
+    Box, Button, ButtonGroup,
     Grid,
     Typography
 } from "@mui/material";
@@ -15,6 +15,8 @@ import {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import {RouteParams} from "../components/Routes";
 import ReactionComponent from "../components/ReactionComponent";
+import * as _ from "lodash";
+import {useGlobalState} from "../providers/GlobalStateProvider";
 
 type FileState = {
     file: File
@@ -27,94 +29,177 @@ type FileState = {
 const FilePage = () => {
 
     const [filepageState, setFilepageState] = useState<FileState>({
-            file: null,
-            project: null,
-            job: null,
-            current_mutation: null,
-            selected_line_mutations: []
-        });
+        file: null,
+        project: null,
+        job: null,
+        current_mutation: null,
+        selected_line_mutations: []
+    });
 
-    let { fileId, projectId, jobId } = useParams();
+    const [state, dispatch] = useGlobalState();
+
+    let {fileId, projectId, jobId} = useParams();
 
     const handleMutationSelection = (mutation: Mutation) => {
         setFilepageState({...filepageState, current_mutation: mutation});
     }
 
     const handleLineSelection = (mutations: Mutation[]) => {
-        setFilepageState({...filepageState, current_mutation: null});
-        setFilepageState({...filepageState, selected_line_mutations: mutations});
+        setFilepageState({
+            ...filepageState,
+            selected_line_mutations: mutations,
+            current_mutation: null
+        });
     }
-
 
     useEffect(() => {
         fetch(`/api/v1/files/${fileId}/`)
             .then(res => res.json())
-            .then(res => setFilepageState({...filepageState,
-                file: res
-            }))
+            .then(res => {
+                const first_survived: Mutation = _.first(res.mutations.filter((mut: Mutation) => {
+                    return mut.result === 'S'
+                }))
+                setFilepageState({
+                    ...filepageState,
+                    file: res,
+                    current_mutation: first_survived
+                });
+            })
         fetch(`/api/v1/projects/${projectId}/`)
             .then(res => res.json())
-            .then(res => setFilepageState({...filepageState,
+            .then(res => setFilepageState({
+                ...filepageState,
                 project: res
             }))
         fetch(`/api/v1/jobs/${jobId}/`)
             .then(res => res.json())
-            .then(res => setFilepageState({...filepageState,
+            .then(res => setFilepageState({
+                ...filepageState,
                 job: res
             }))
     }, []);
 
     const closeLine = () => {
-        setFilepageState({...filepageState,
+        setFilepageState({
+            ...filepageState,
             current_mutation: null
         });
     }
 
     const closeDiff = () => {
-        setFilepageState({...filepageState,
-            selected_line_mutations : []
+        setFilepageState({
+            ...filepageState,
+            selected_line_mutations: []
         })
     }
 
-    return(
+    const previousMutant = () => {
+        let mutants = filepageState.file.mutations.filter((mutant) => {
+            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
+        })
+        let current = mutants.findIndex((mutant, a, i) => {
+            return mutant.id == filepageState.current_mutation.id;
+        });
+        let previous = current - 1;
+        if (previous < 0) {
+            return false;
+        }
+        setFilepageState({
+            ...filepageState,
+            current_mutation: mutants[previous]
+        });
+    }
+
+    const nextMutant = () => {
+        let mutants = filepageState.file.mutations.filter((mutant) => {
+            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
+        })
+        let current = mutants.findIndex((mutant, a, i) => {
+            return mutant.id == filepageState.current_mutation.id;
+        });
+        let next = current + 1;
+        if (next > mutants.length) {
+            return false;
+        }
+        setFilepageState({
+            ...filepageState,
+            current_mutation: mutants[next]
+        });
+    }
+
+    const hasNext = () => {
+        let mutants = filepageState.file.mutations.filter((mutant) => {
+            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
+        })
+        let current = mutants.findIndex((mutant) => {
+            return mutant.id == filepageState.current_mutation.id;
+        });
+        let next = current + 1;
+        console.log(next, 'next');
+        if (next > mutants.length - 1) {
+            return false;
+        }
+        return true;
+    }
+
+    const hasPrevious = () => {
+        let mutants = filepageState.file.mutations.filter((mutant) => {
+            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
+        })
+        let current = mutants.findIndex((mutant) => {
+            return mutant.id == filepageState.current_mutation.id;
+        });
+        let next = current - 1;
+        console.log(next, 'prev');
+        if (next < 0) {
+            return false;
+        }
+        return true;
+    }
+
+    return (
         <>
             <Typography>File: {filepageState.file ? filepageState.file.path : <></>}</Typography>
             <Box>
             </Box>
             <Grid container spacing={2}>
                 <Grid item xs={6}>
-                    {filepageState.file ? <CodeEditor
-                        file={filepageState.file}
-                        onLineSelected={handleLineSelection}
-                    /> : <></>}
+                    {filepageState.file ?
+                        <CodeEditor
+                            file={filepageState.file}
+                            onLineSelected={handleLineSelection}
+                            currently_viewing_mutant={filepageState.current_mutation}
+                        />
+                        :
+                        <></>}
                 </Grid>
                 <Grid item xs={6}>
                     {filepageState.current_mutation ?
                         <>
-                            <Button
-                                variant={"contained"}
-                                onClick={() => closeLine()}
-                            >Back</Button>
                             <CodeDiffEditor
                                 original={filepageState.file.source_code}
                                 mutated={filepageState.current_mutation.source_code}
                                 mutation={filepageState.current_mutation}
                             />
                             <ReactionComponent mutant={filepageState.current_mutation}/>
+
+                            <ButtonGroup variant={"contained"} aria-label="contained primary button group">
+                                <Button disabled={!hasPrevious()} onClick={() => previousMutant()}>Previous</Button>
+                                <Button disabled={!hasNext()} onClick={() => nextMutant()}>Next</Button>
+                            </ButtonGroup>
+
                             <MutationsView
-                                mutations={[filepageState.current_mutation]}
+                                mutations={filepageState.file.mutations}
+                                currently_viewing={filepageState.current_mutation}
                                 onMutationSelected={handleMutationSelection}
                             />
                         </>
                         :
                         filepageState.selected_line_mutations.length > 0 ?
                             <>
-                                <Button
-                                    variant={"contained"}
-                                    onClick={() => closeDiff()}
-                                >Back</Button>
                                 <MutationsView
                                     mutations={filepageState.selected_line_mutations}
+                                    currently_viewing={filepageState.current_mutation}
                                     onMutationSelected={handleMutationSelection}
                                 />
                             </>

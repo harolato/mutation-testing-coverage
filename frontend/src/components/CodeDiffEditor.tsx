@@ -1,10 +1,12 @@
 import * as React from "react";
-import {DiffEditor, Monaco} from "@monaco-editor/react";
-import {editor, IRange} from "monaco-editor";
+import {DiffEditor, Monaco, useMonaco} from "@monaco-editor/react";
+import {editor, IRange, languages} from "monaco-editor";
 import {SourceCode} from "../types/SourceCode";
 import {Mutation} from "../types/Mutation";
 import IStandaloneDiffEditorConstructionOptions = editor.IStandaloneDiffEditorConstructionOptions;
 import IDiffEditor = editor.IDiffEditor;
+import {useEffect, useRef, useState} from "react";
+import setMonarchTokensProvider = languages.setMonarchTokensProvider;
 
 
 interface CodeDiffEditorProps {
@@ -14,6 +16,10 @@ interface CodeDiffEditorProps {
 }
 
 const CodeDiffEditor = (props:CodeDiffEditorProps) => {
+
+    const editorRef = useRef<IDiffEditor>();
+
+    const [editorLoaded, setEditorLoaded] = useState(false);
 
     const options:IStandaloneDiffEditorConstructionOptions = {
             lineNumbers: (number: number) => {
@@ -25,9 +31,23 @@ const CodeDiffEditor = (props:CodeDiffEditorProps) => {
             readOnly: true,
             renderSideBySide: false,
             enableSplitViewResizing: false
+    }
+
+    useEffect(() => {
+        if (editorLoaded) {
+            let range: IRange = {
+                startLineNumber: props.mutation.start_line,
+                endLineNumber: props.mutation.end_line,
+                startColumn: 0,
+                endColumn: 0
+            };
+            editorRef.current.revealRangeInCenter(range);
         }
+    }, [props.mutation.id])
 
     const handleDiffEditorDidMount = (editor: IDiffEditor, monaco: Monaco) => {
+        editorRef.current = editor;
+        setEditorLoaded(true);
         let range: IRange = {
             startLineNumber: props.mutation.start_line,
             endLineNumber: props.mutation.end_line,

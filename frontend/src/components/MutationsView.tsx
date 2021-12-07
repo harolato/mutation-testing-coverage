@@ -17,6 +17,7 @@ import {useEffect, useState} from "react";
 
 type MutationsViewProps = {
     mutations: Mutation[]
+    currently_viewing: Mutation
     onMutationSelected: any
 }
 
@@ -25,6 +26,8 @@ const MutationsView = (props: MutationsViewProps) => {
     const [state, dispatch] = useGlobalState()
 
     const [mutations, setMutations] = useState<Mutation[]>(props.mutations)
+
+    const [currentlyViewing, setCurrentlyViewing] = useState(0)
 
     const handleChooseMutation = (mutation: Mutation) => {
         props.onMutationSelected(mutation);
@@ -39,8 +42,11 @@ const MutationsView = (props: MutationsViewProps) => {
                 return row.result !== 'K';
             });
         }
+        if ( props.currently_viewing != null ) {
+            setCurrentlyViewing(props.currently_viewing.id);
+        }
         setMutations(data);
-    }, [state.layout.show_killed_mutants, props.mutations]);
+    }, [state.layout.show_killed_mutants, props.mutations, props.currently_viewing]);
 
     return (
         <div className={"mutation-view"}>
@@ -58,7 +64,13 @@ const MutationsView = (props: MutationsViewProps) => {
                     <TableBody>
                         {
                             mutations.map((mutation) =>
-                                <TableRow key={mutation.id} className={"mutation-view"}>
+                                <TableRow
+                                    key={mutation.id}
+                                    className={"mutation-view"}
+                                    sx={{
+                                        backgroundColor: currentlyViewing == mutation.id? "rgba(0,255,0, 0.3)":""
+                                    }}
+                                >
                                     <TableCell>Description: {mutation.description}</TableCell>
                                     <TableCell>{MutationResult[mutation.result]}</TableCell>
                                     <TableCell>Source: {mutation.mutated_source_code}</TableCell>
@@ -70,11 +82,11 @@ const MutationsView = (props: MutationsViewProps) => {
                                         }
                                     </TableCell>
                                     <TableCell>
-                                        <div onClick={(e) => handleChooseMutation(mutation)}>
-                                            <IconButton>
-                                                <FileOpen></FileOpen>
-                                            </IconButton>
-                                        </div>
+                                        <IconButton
+                                            disabled={currentlyViewing == mutation.id}
+                                            onClick={(e) => handleChooseMutation(mutation)}>
+                                            <FileOpen></FileOpen>
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             )

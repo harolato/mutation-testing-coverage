@@ -1,9 +1,9 @@
 import * as React from "react";
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import Editor, {Monaco} from "@monaco-editor/react";
 import {Chip, Stack} from "@mui/material";
 import * as _ from "lodash";
-import {editor} from "monaco-editor";
+import {editor, IRange} from "monaco-editor";
 import {Mutation} from "../types/Mutation";
 import {File} from "../types/File";
 import * as ReactDOM from "react-dom";
@@ -17,11 +17,44 @@ import IContentWidget = editor.IContentWidget;
 interface CodeEditorProps {
     file: File,
     onLineSelected: any
+    currently_viewing_mutant: Mutation
 }
 
 const CodeEditor = (props: CodeEditorProps) => {
 
+    const editorRef = useRef<ICodeEditor>();
+
+    const [editorLoaded, setEditorLoaded] = useState(false);
+
+    let decorations: IModelDeltaDecoration[] = [];
+
+    useEffect(() => {
+        if (editorLoaded && props.currently_viewing_mutant) {
+            // Jump to first survived mutant
+            let range: IRange = {
+                startLineNumber: props.currently_viewing_mutant.start_line,
+                endLineNumber: props.currently_viewing_mutant.end_line,
+                startColumn: 0,
+                endColumn: 0
+            };
+            editorRef.current.revealRangeInCenter(range);
+
+            // let decoration: IModelDeltaDecoration = {
+            //     range: range,
+            //     options: {
+            //         className: 'myGlyphMarginClass',
+            //         isWholeLine: false,
+            //         glyphMarginClassName: 'myGlyphMarginClass'
+            //     }
+            // }
+            // decorations.push(decoration)
+            // editorRef.current.deltaDecorations([], [decoration]);
+
+        }
+    }, [props.currently_viewing_mutant])
+
     const options = {
+        glyphMargin: true,
         automaticLayout: true,
         lineNumbers: (number: number) => {
             return "" + number;
@@ -35,6 +68,10 @@ const CodeEditor = (props: CodeEditorProps) => {
     let lines = _.groupBy(props.file.mutations, (mutation: any) => {
         return mutation.start_line;
     });
+
+    const first_survived = _.first(props.file.mutations.filter((mut) => {
+        return mut.result === 'S'
+    }))
 
     const renderChip = (mutations: Mutation[]): HTMLDivElement => {
         let el = document.createElement('div');
@@ -88,7 +125,7 @@ const CodeEditor = (props: CodeEditorProps) => {
     }
 
     const handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
-        let decorations: IModelDeltaDecoration[] = [];
+        editorRef.current = editor;
 
         _.forEach(lines, (value: any, key: any) => {
             _.forEach(value, (val) => {
@@ -145,6 +182,18 @@ const CodeEditor = (props: CodeEditorProps) => {
             editor.addContentWidget(contentWidget);
         });
         editor.deltaDecorations([], decorations);
+
+        // Jump to first survived mutant
+        let range: IRange = {
+            startLineNumber: first_survived.start_line,
+            endLineNumber: first_survived.end_line,
+            startColumn: 0,
+            endColumn: 0
+        };
+        editor.revealRangeInCenter(range);
+
+        setEditorLoaded(true);
+
     };
 
     return (

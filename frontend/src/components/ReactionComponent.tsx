@@ -22,9 +22,8 @@ const ReactionComponent = (props: ReactionComponentProps) => {
     return (
         <>
             <ButtonGroup variant="outlined" aria-label="outlined primary button group">
-                <Button>Like</Button>
+                <Button>Fix</Button>
                 <Button>Ignore</Button>
-                <Button>Dislike</Button>
             </ButtonGroup>
         </>
     );
