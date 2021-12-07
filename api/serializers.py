@@ -3,10 +3,11 @@ import os.path
 import re
 
 from django.contrib.auth.models import User
+from django.db.models import Q
 from rest_framework import serializers
 import requests
 
-from job.models import Job, File, Mutation, Project, Reaction, Profile
+from job.models import Job, File, Mutation, Project, Reaction, Profile, ProjectMembership
 
 
 def get_file_source_language(url):
@@ -184,11 +185,25 @@ class ListProjectSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
+class ProjectUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        exclude = ()
+        model = ProjectMembership
+
+
 class DetailProjectSerializer(serializers.ModelSerializer):
     jobs = serializers.SerializerMethodField()
+    members = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
 
     def get_jobs(self, obj: Project):
         return BasicJobSerializer(instance=obj.project_jobs, many=True, read_only=True).data
+
+    def get_members(self, project: Project):
+        return ProjectUserSerializer(project.projectmembership_set.filter(~Q(role='O')), many=True, read_only=True).data
+
+    def get_owner(self, project: Project):
+        return ProjectUserSerializer(project.projectmembership_set.get(role='O'), many=False).data
 
     class Meta:
         model = Project
@@ -196,6 +211,11 @@ class DetailProjectSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    access_token = serializers.SerializerMethodField()
+
+    def get_access_token(self, profile: Profile):
+        return len(profile.access_token) > 0
+
     class Meta:
         model = Profile
         exclude = ()

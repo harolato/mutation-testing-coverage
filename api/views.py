@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, BasicFileSerializer, \
@@ -40,17 +41,15 @@ class MutationViewSet(viewsets.ModelViewSet):
     serializer_class = MutationSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(APIView):
     authentication_classes = (SessionAuthentication, )
     permission_classes = [IsAuthenticated]
     http_method_names = ['get']
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         user: User = self.request.user
         if user.id:
-            return User.objects.filter(id=user.id)
+            return Response(UserSerializer(user, many=False).data)
         return None
 
 
@@ -65,9 +64,9 @@ class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user: User = self.request.user
         if user.id:
-            return Project.objects.filter(user=user)
+            return Project.objects.filter(projectmembership__user=user)
         return None
 
     def retrieve(self, request, *args, **kwargs):
         project = self.get_object()
-        return Response(DetailProjectSerializer(instance=project).data)
+        return Response(DetailProjectSerializer(instance=project, context={'request': self.request}).data)

@@ -14,6 +14,9 @@ class Project(Timestampable):
     git_repo_name = models.CharField(max_length=255, blank=True)
     users = models.ManyToManyField(User, related_name='project_users', through='ProjectMembership')
 
+    def get_owner(self):
+        return self.users.filter(projectmembership__role='O').first()
+
     class Meta:
         db_table = 'project'
 

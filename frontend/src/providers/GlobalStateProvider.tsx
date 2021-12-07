@@ -1,12 +1,15 @@
 import * as React from "react";
 import {useEffect} from "react";
+import {User} from "../types/UserType";
+import {GlobalStateType} from "../types/GlobalStateType";
 
-const initialGlobalState = {
-    user: "test",
-    counter: 0,
+
+const initialGlobalState:GlobalStateType = {
+    user: null,
     layout: {
         show_killed_mutants: false
-    }
+    },
+    loading: true
 }
 
 const GlobalStateContext = React.createContext(initialGlobalState);
@@ -14,11 +17,20 @@ const DispatchStateContext = React.createContext(undefined);
 
 export const GlobalStateProvider = ({ children } : {children: any}) => {
         const [state, dispatch] = React.useReducer(
-            (state: any, newValue: any) => ({...state, ...newValue}),
+            (state: GlobalStateType, newValue: GlobalStateType) => ({...state, ...newValue}),
             initialGlobalState
         );
         useEffect(() => {
-            fetch('')
+            fetch('/api/v1/user/')
+                .then(res => res.json())
+                .then((user: User) => {
+                    dispatch({
+                        ...state,
+                        user: user,
+                        loading: false
+                    })
+                });
+
         }, [])
         return (
             <GlobalStateContext.Provider value={state}>

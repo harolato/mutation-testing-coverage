@@ -1,10 +1,10 @@
 import * as React from "react";
-import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
 import {Link, useParams} from "react-router-dom";
 import {Project} from "../types/Project";
 import {Job} from "../types/Job";
+
 import {useEffect, useState} from "react";
-import {RouteParams} from "../components/Routes";
 
 type ProjectState = {
     project: Project
@@ -13,9 +13,9 @@ type ProjectState = {
 const ProjectPage = () => {
 
 
-    let initialState:ProjectState = {
-            project: null
-        };
+    let initialState: ProjectState = {
+        project: null
+    };
     const [state, setState] = useState<ProjectState>(initialState);
     let {projectId} = useParams()
 
@@ -29,7 +29,7 @@ const ProjectPage = () => {
     }, [])
 
 
-    return(
+    return (
         <>
             <Typography>Recent builds</Typography>
             <TableContainer component={Paper}>
@@ -43,7 +43,7 @@ const ProjectPage = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {state.project != null ?state.project.jobs.map((job: Job) =>
+                        {state.project != null ? state.project.jobs.map((job: Job) =>
                             <TableRow key={job.id}>
                                 <TableCell>{job.id}</TableCell>
                                 <TableCell>

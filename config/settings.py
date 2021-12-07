@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'job.apps.JobConfig',
     'api.apps.ApiConfig',
     'homepage.apps.HomepageConfig',
-    'frontend.apps.FrontendConfig'
+    'frontend.apps.FrontendConfig',
+    'github_api.apps.GithubApiConfig',
 ]
 
 REST_FRAMEWORK = {
