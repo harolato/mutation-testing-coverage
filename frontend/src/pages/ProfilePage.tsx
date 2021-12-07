@@ -29,7 +29,7 @@ const ProfilePage = () => {
     if (state.loading) {
         return (<>Loading</>);
     } else {
-        if (state.user != null && !state.user.user_profile.access_token) {
+        if (state.user != null && state.user.user_profile != null && !state.user.user_profile.access_token) {
             github_profile = <><Box>
                 <Typography variant={"h4"}>
                     GitHub Access Token
