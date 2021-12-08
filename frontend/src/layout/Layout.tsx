@@ -4,6 +4,7 @@ import SideMenu from "./SideMenu";
 import PageRoutes from "../components/Routes";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import {Outlet} from "@mui/icons-material";
+import NotificationToast from "../components/NotificationToast";
 
 const drawerWidth = 240;
 
@@ -69,6 +70,7 @@ const Layout = () => {
                     <PageRoutes/>
                 </Box>
             </Box>
+            <NotificationToast/>
         </>);
 }
 export default Layout

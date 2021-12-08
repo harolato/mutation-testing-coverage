@@ -2,11 +2,9 @@ import * as React from "react";
 import {Avatar, Box, Button, FormControl, Link, TextField, Typography} from "@mui/material";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import {useEffect, useState} from "react";
-import {User} from "../types/UserType";
+import {UserProfile} from "../types/UserType";
 import {GithubUser} from "../types/GitHubTypes";
-import {AddLink} from "@mui/icons-material";
-import {Simulate} from "react-dom/test-utils";
-import error = Simulate.error;
+import Cookies from 'js-cookie';
 
 const ProfilePage = () => {
 
@@ -14,15 +12,76 @@ const ProfilePage = () => {
 
     const [githubUser, setGithubUser] = useState<GithubUser>(null)
 
+    const [accessTokenValue, setAccessTokenValue] = useState("");
+
+    const handleFetchErrors = (response: Response) => {
+        if (!response.ok) {
+            return Promise.reject(response);
+        }
+        return response.json();
+    }
+
+    const catchError = (response: any) => {
+        response.json().then((json: any) => {
+            dispatch({
+                ...state,
+                notification_toast: {
+                    open: true,
+                    type: 'error',
+                    message: json.error
+                }
+            });
+        })
+    }
+
     useEffect(() => {
-        if (state.user != null && state.user.user_profile) {
+        if (state.user != null && state.user.user_profile && state.user.user_profile.access_token) {
             fetch('/github_api/v1/user/')
-                .then(res => res.json())
+                .then(handleFetchErrors)
                 .then((user: GithubUser) => {
                     setGithubUser(user)
-                });
+                })
+                .catch(catchError);
         }
     }, [state.user])
+
+    const updateProfile = (data: UserProfile) => {
+        fetch('/api/v1/profile/', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': Cookies.get('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(handleFetchErrors)
+            .then((res: UserProfile) => {
+                dispatch({
+                    ...state,
+                    user: {
+                        ...state.user,
+                        user_profile: res
+                    }
+                })
+            })
+            .catch(catchError)
+    }
+
+    const disconnectGHAccount = () => {
+        updateProfile({
+            access_token: ''
+        });
+        setGithubUser(null);
+    }
+
+    const connectGHAccount = () => {
+        setAccessTokenValue("")
+        updateProfile({access_token: accessTokenValue})
+    }
+
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAccessTokenValue(event.target.value);
+    };
 
     let github_profile = <><Box>
         <Typography variant={"h4"}>
@@ -30,8 +89,11 @@ const ProfilePage = () => {
         </Typography>
         <FormControl>
             <TextField
+                onChange={handleChange}
+                value={accessTokenValue}
                 label={"Github Personal Access Token"}
             />
+            <Button variant={"contained"} onClick={() => connectGHAccount()}>Save</Button>
         </FormControl>
     </Box></>
 
@@ -44,7 +106,8 @@ const ProfilePage = () => {
                 <Typography>Name: {githubUser.name}</Typography>
                 <Typography>Avatar:</Typography> <Avatar variant={"rounded"} src={githubUser.avatar_url}/>
                 <Typography><Link target={"_blank"} href={githubUser.html_url}>{githubUser.login}</Link></Typography>
-                <Button variant={"contained"} color={"error"}>Disconnect Account</Button>
+                <Button variant={"contained"} color={"error"} onClick={() => disconnectGHAccount()}>Disconnect
+                    Account</Button>
             </>
         }
     }

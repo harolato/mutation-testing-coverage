@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from github import Github
+from github.GithubException import BadCredentialsException
 from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -44,8 +45,13 @@ class GHUserViewSet(APIView):
     def get(self, request, *args, **kwargs):
         user: User = self.request.user
         if len(user.user_profile.access_token) <= 0:
-            return []
+            return Response(data={}, status=404)
 
-        g = Github(user.user_profile.access_token)
-        g_user = g.get_user()
-        return Response(g_user.raw_data)
+        try:
+            g = Github(user.user_profile.access_token)
+            g_user = g.get_user()
+            return Response(g_user.raw_data)
+        except BadCredentialsException:
+            return Response(data={
+                'error': "incorrect access token"
+            }, status=404)

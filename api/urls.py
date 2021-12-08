@@ -16,3 +16,4 @@ router.register('projects', views.ProjectViewSet)
 urlpatterns: list = router.urls
 
 urlpatterns.append(path('user/', views.UserViewSet.as_view()))
+urlpatterns.append(path('profile/', views.ProfileViewSet.as_view()))

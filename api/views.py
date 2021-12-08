@@ -1,5 +1,7 @@
 # Create your views here.
 from django.contrib.auth.models import User
+from github import Github
+from github.GithubException import BadCredentialsException
 
 from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
@@ -10,8 +12,8 @@ from rest_framework.views import APIView
 from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, BasicFileSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
-    UserSerializer
-from job.models import Job, File, Mutation, Project
+    UserSerializer, ProfileSerializer, ProfileUpdateSerializer
+from job.models import Job, File, Mutation, Project, Profile
 
 
 class JobViewSet(viewsets.ModelViewSet):
@@ -42,7 +44,7 @@ class MutationViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(APIView):
-    authentication_classes = (SessionAuthentication, )
+    authentication_classes = (SessionAuthentication,)
     permission_classes = [IsAuthenticated]
     http_method_names = ['get']
 
@@ -50,6 +52,36 @@ class UserViewSet(APIView):
         user: User = self.request.user
         if user.id:
             return Response(UserSerializer(user, many=False).data)
+        return None
+
+
+class ProfileViewSet(APIView):
+    authentication_classes = (SessionAuthentication, SimpleTokenAuth)
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'put']
+
+    def get(self, request, *args, **kwargs):
+        user: User = self.request.user
+        if user.id:
+            profile = Profile.objects.get(user_id=user.id)
+            return Response(ProfileSerializer(profile, many=False).data)
+        return None
+
+    def put(self, request, *args, **kwargs):
+        request.data['access_token'] = str(request.data['access_token'])
+
+        if len(request.data['access_token']) > 0:
+            try:
+                gh = Github(login_or_token=request.data['access_token']).get_user().login
+            except BadCredentialsException:
+                return Response(data={'error': 'Invalid Github Access Token'}, status=401)
+        user: User = self.request.user
+        if user.id:
+            profile = Profile.objects.get(user_id=user.id)
+            serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(ProfileSerializer(serializer.instance, many=False).data)
         return None
 
 

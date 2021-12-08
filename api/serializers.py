@@ -218,7 +218,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        exclude = ()
+        fields = ('access_token',)
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('access_token',)
 
 
 class UserSerializer(serializers.ModelSerializer):

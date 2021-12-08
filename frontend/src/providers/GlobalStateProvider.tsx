@@ -9,7 +9,12 @@ const initialGlobalState:GlobalStateType = {
     layout: {
         show_killed_mutants: false
     },
-    loading: true
+    loading: true,
+    notification_toast: {
+        open: false,
+        type: 'success',
+        message: ''
+    }
 }
 
 const GlobalStateContext = React.createContext(initialGlobalState);

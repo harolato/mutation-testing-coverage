@@ -93,64 +93,50 @@ const FilePage = () => {
         })
     }
 
-    const previousMutant = () => {
-        let mutants = filepageState.file.mutations.filter((mutant) => {
+    const getMutants = () => {
+        return filepageState.file.mutations.filter((mutant) => {
             return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
-        })
-        let current = mutants.findIndex((mutant, a, i) => {
-            return mutant.id == filepageState.current_mutation.id;
         });
-        let previous = current - 1;
+    }
+
+    const getCurrentMutantIndex = () => {
+        return getMutants().findIndex((mutant, a, i) => {
+            return mutant.id == filepageState.current_mutation.id;
+        })
+    }
+
+    const previousMutant = () => {
+        let previous = getCurrentMutantIndex() - 1;
         if (previous < 0) {
             return false;
         }
         setFilepageState({
             ...filepageState,
-            current_mutation: mutants[previous]
+            current_mutation: getMutants()[previous]
         });
     }
 
     const nextMutant = () => {
-        let mutants = filepageState.file.mutations.filter((mutant) => {
-            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
-        })
-        let current = mutants.findIndex((mutant, a, i) => {
-            return mutant.id == filepageState.current_mutation.id;
-        });
-        let next = current + 1;
-        if (next > mutants.length) {
+        let next = getCurrentMutantIndex() + 1;
+        if (next > getMutants().length) {
             return false;
         }
         setFilepageState({
             ...filepageState,
-            current_mutation: mutants[next]
+            current_mutation: getMutants()[next]
         });
     }
 
     const hasNext = () => {
-        let mutants = filepageState.file.mutations.filter((mutant) => {
-            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
-        })
-        let current = mutants.findIndex((mutant) => {
-            return mutant.id == filepageState.current_mutation.id;
-        });
-        let next = current + 1;
-        console.log(next, 'next');
-        if (next > mutants.length - 1) {
+        let next = getCurrentMutantIndex() + 1;
+        if (next > getMutants().length - 1) {
             return false;
         }
         return true;
     }
 
     const hasPrevious = () => {
-        let mutants = filepageState.file.mutations.filter((mutant) => {
-            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
-        })
-        let current = mutants.findIndex((mutant) => {
-            return mutant.id == filepageState.current_mutation.id;
-        });
-        let next = current - 1;
-        console.log(next, 'prev');
+        let next = getCurrentMutantIndex() - 1;
         if (next < 0) {
             return false;
         }
@@ -189,7 +175,7 @@ const FilePage = () => {
                             </ButtonGroup>
 
                             <MutationsView
-                                mutations={filepageState.file.mutations}
+                                mutations={getMutants()}
                                 currently_viewing={filepageState.current_mutation}
                                 onMutationSelected={handleMutationSelection}
                             />

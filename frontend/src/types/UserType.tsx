@@ -10,5 +10,5 @@ export type User = {
 }
 
 export type UserProfile = {
-    access_token: boolean
+    access_token: boolean | string
 }
