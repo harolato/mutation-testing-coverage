@@ -9,5 +9,6 @@ export type Job = {
     service_name: string;
     test_cases: string[];
     created_at: Date
-    files: File[]
+    files: File[],
+    github_issue_id: number
 }

@@ -1,7 +1,6 @@
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import {Alert, Snackbar, SnackbarCloseReason, Stack} from "@mui/material";
 import React from "react";
-import {NotificationToastType} from "../types/GlobalStateType";
 
 
 const NotificationToast = () => {
@@ -16,7 +15,7 @@ const NotificationToast = () => {
             notification_toast: {
                 show: false,
                 message: '',
-                type: ''
+                type: 'success'
             }
         });
     }

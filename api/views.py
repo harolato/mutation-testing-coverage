@@ -1,5 +1,8 @@
 # Create your views here.
+from difflib import context_diff, unified_diff
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from github import Github
 from github.GithubException import BadCredentialsException
 
@@ -23,6 +26,17 @@ class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = JobSerializer(data=request.data, context={'request': self.request})
+        if serializer.is_valid():
+            try:
+                serializer.create(serializer.validated_data)
+            except ValueError as error:
+                return Response(data={'status': 'error', 'error': str(error)}, status=400)
+            return Response({'status': 'OK'})
+        else:
+            return Response(data={'status': 'error', 'error': serializer.errors}, status=400)
+
     def retrieve(self, request, *args, **kwargs):
         job = self.get_object()
         return Response(BasicJobSerializer(instance=job).data)
@@ -38,7 +52,7 @@ class FileViewSet(viewsets.ModelViewSet):
 
 
 class MutationViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get']
+    http_method_names = ['get', 'patch']
     queryset = Mutation.objects.all()
     serializer_class = MutationSerializer
 
@@ -74,7 +88,7 @@ class ProfileViewSet(APIView):
             try:
                 gh = Github(login_or_token=request.data['access_token']).get_user().login
             except BadCredentialsException:
-                return Response(data={'error': 'Invalid Github Access Token'}, status=401)
+                return Response(data={'error': 'Invalid Github Access Token'}, status=400)
         user: User = self.request.user
         if user.id:
             profile = Profile.objects.get(user_id=user.id)
@@ -102,3 +116,36 @@ class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         project = self.get_object()
         return Response(DetailProjectSerializer(instance=project, context={'request': self.request}).data)
+
+
+class SubmitGHIssueViewSet(APIView):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = [IsAuthenticated]
+
+    http_method_names = ['get', 'post']
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        errors = []
+        if user.id is None:
+            errors.append('User not found')
+        if kwargs['mutant_id'] is None:
+            errors.append('Mutation ID missing')
+        try:
+            mutant = Mutation.objects.get(pk=kwargs['mutant_id'])
+        except ObjectDoesNotExist:
+            errors.append('Mutation not found')
+
+        if len(errors) == 0:
+            file_source_code = mutant.file.get_source_code
+            mutated_source_fragment = mutant.get_mutated_source_code(file_source_code)
+
+            diff_string = unified_diff(file_source_code['source'].split('\n'), mutated_source_fragment['source'].split('\n'), lineterm="")
+
+            markdown = "```diff\n" + "\n".join(diff_string) + "\n```"
+
+            return Response(data={'markdown': markdown})
+        return Response(data={'errors': errors}, status=400)
+
+    def post(self, request, *args, **kwargs):
+        pass

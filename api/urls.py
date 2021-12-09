@@ -17,3 +17,4 @@ urlpatterns: list = router.urls
 
 urlpatterns.append(path('user/', views.UserViewSet.as_view()))
 urlpatterns.append(path('profile/', views.ProfileViewSet.as_view()))
+urlpatterns.append(path('submit_github_issue/<int:mutant_id>/', views.SubmitGHIssueViewSet.as_view()))

@@ -5,7 +5,7 @@ import {
     Typography
 } from "@mui/material";
 import {File} from "../types/File";
-import {Mutation} from "../types/Mutation";
+import {MutantStatusType, Mutation} from "../types/Mutation";
 import {Project} from "../types/Project";
 import {Job} from "../types/Job";
 import CodeEditor from "../components/CodeEditor";
@@ -13,10 +13,10 @@ import CodeDiffEditor from "../components/CodeDiffEditor";
 import MutationsView from "../components/MutationsView";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
-import {RouteParams} from "../components/Routes";
 import ReactionComponent from "../components/ReactionComponent";
 import * as _ from "lodash";
 import {useGlobalState} from "../providers/GlobalStateProvider";
+import SubmitGHIssueComponent from "../components/SubmitGHIssueComponent";
 
 type FileState = {
     file: File
@@ -37,8 +37,8 @@ const FilePage = () => {
     });
 
     const [state, dispatch] = useGlobalState();
-
     let {fileId, projectId, jobId} = useParams();
+    const [fixMutant, setFixMutant] = useState<Mutation>(null)
 
     const handleMutationSelection = (mutation: Mutation) => {
         setFilepageState({...filepageState, current_mutation: mutation});
@@ -59,24 +59,24 @@ const FilePage = () => {
                 const first_survived: Mutation = _.first(res.mutations.filter((mut: Mutation) => {
                     return mut.result === 'S'
                 }))
-                setFilepageState({
-                    ...filepageState,
+                setFilepageState(prevState => ({
+                    ...prevState,
                     file: res,
                     current_mutation: first_survived
-                });
+                }));
             })
         fetch(`/api/v1/projects/${projectId}/`)
             .then(res => res.json())
-            .then(res => setFilepageState({
-                ...filepageState,
+            .then(res => setFilepageState(prevState => ({
+                ...prevState,
                 project: res
-            }))
+            })))
         fetch(`/api/v1/jobs/${jobId}/`)
             .then(res => res.json())
-            .then(res => setFilepageState({
-                ...filepageState,
+            .then(res => setFilepageState(prevState => ({
+                ...prevState,
                 job: res
-            }))
+            })))
     }, []);
 
     const closeLine = () => {
@@ -143,6 +143,25 @@ const FilePage = () => {
         return true;
     }
 
+    const handleUpdateMutantStatus = (status: number, mutant: Mutation) => {
+        setFilepageState({
+            ...filepageState,
+            file: {
+                ...filepageState.file,
+                mutations: filepageState.file.mutations.map((mutation: Mutation) => {
+                    if (mutant.id == mutation.id) {
+                        mutation.status = status;
+                    }
+                    return mutation;
+                })
+            }
+        })
+        if (status == MutantStatusType.Fix) {
+            setFixMutant(mutant)
+        }
+
+    }
+
     return (
         <>
             <Typography>File: {filepageState.file ? filepageState.file.path : <></>}</Typography>
@@ -167,12 +186,21 @@ const FilePage = () => {
                                 mutated={filepageState.current_mutation.source_code}
                                 mutation={filepageState.current_mutation}
                             />
-                            <ReactionComponent mutant={filepageState.current_mutation}/>
-
-                            <ButtonGroup variant={"contained"} aria-label="contained primary button group">
-                                <Button disabled={!hasPrevious()} onClick={() => previousMutant()}>Previous</Button>
-                                <Button disabled={!hasNext()} onClick={() => nextMutant()}>Next</Button>
-                            </ButtonGroup>
+                            <Grid container columns={12} justifyContent={"space-between"}>
+                                <Grid item xs={3}>
+                                    <ReactionComponent
+                                        mutant={filepageState.current_mutation}
+                                        updateMutantStatusState={handleUpdateMutantStatus}
+                                    />
+                                </Grid>
+                                <Grid item xs={3}>
+                                    <ButtonGroup variant={"contained"} aria-label="contained primary button group">
+                                        <Button disabled={!hasPrevious()}
+                                                onClick={() => previousMutant()}>Previous</Button>
+                                        <Button disabled={!hasNext()} onClick={() => nextMutant()}>Next</Button>
+                                    </ButtonGroup>
+                                </Grid>
+                            </Grid>
 
                             <MutationsView
                                 mutations={getMutants()}
@@ -194,6 +222,10 @@ const FilePage = () => {
                     }
                 </Grid>
             </Grid>
+            <SubmitGHIssueComponent
+                mutant={fixMutant}
+                project={filepageState.project}
+            />
         </>);
 }
 

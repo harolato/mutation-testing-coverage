@@ -10,6 +10,7 @@ from job.models import Job, File, Mutation, Project, Token, Profile, ProjectMemb
 class FileInline(admin.StackedInline):
     show_change_link = True
     model = File
+    extra = 0
 
 
 class JobAdmin(admin.ModelAdmin):
@@ -19,6 +20,7 @@ class JobAdmin(admin.ModelAdmin):
 
 class MutationInline(admin.StackedInline):
     model = Mutation
+    extra = 0
 
 
 class FileAdmin(admin.ModelAdmin):
@@ -28,12 +30,15 @@ class FileAdmin(admin.ModelAdmin):
 
 class TokensInline(admin.StackedInline):
     show_change_link = True
+    readonly_fields = ('token',)
     model = Token
+    extra = 0
 
 
 class JobsInline(admin.StackedInline):
     show_change_link = True
     model = Job
+    extra = 0
 
 
 class ProjectMembershipInline(admin.TabularInline):
@@ -56,6 +61,7 @@ class ProfileAdmin(admin.ModelAdmin):
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
+    extra = 0
 
 
 class CustomUserAdmin(UserAdmin):

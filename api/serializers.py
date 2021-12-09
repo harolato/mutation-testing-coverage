@@ -1,109 +1,30 @@
-import json
-import os.path
-import re
-
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import serializers
-import requests
-
-from job.models import Job, File, Mutation, Project, Reaction, Profile, ProjectMembership
+from job.models import Job, File, Mutation, Project, Profile, ProjectMembership, MutantCoverage
 
 
-def get_file_source_language(url):
-    json_file = open(os.path.dirname(__file__) + '/../storage/monaco_languages.json')
-    data = json.load(json_file)
-    json_file.close()
-    extension = re.search(r"^.*(\..*)$", url)
-    if extension:
-        url_extension = extension.group(1)
-        for file_type in data:
-            for file_extension in file_type['extensions']:
-                if file_extension == url_extension:
-                    return file_type
-    return data[0]
-
-
-def get_source_code(file: File):
-    """
-    Fetch source code from github
-    """
-    job = file.job
-    project = job.project
-    url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{file.path}"
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        source_code = response.content.decode("utf-8")
-        return {
-            "source": source_code,
-            "total_lines": source_code.count("\n"),
-            "file_type": get_file_source_language(url),
-        }
-    return {
-        "source": "",
-        "total_lines": 0,
-        "file_type": get_file_source_language(url),
-    }
-
-
-class ReactionSerializer(serializers.ModelSerializer):
+class MutantCoverageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Reaction
-        exclude = ('user',)
+        model = MutantCoverage
+        exclude = ()
 
 
 class MutationSerializer(serializers.ModelSerializer):
     source_code = serializers.SerializerMethodField()
-
-    # reactions = serializers.SerializerMethodField()
+    covered_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Mutation
         exclude = ()
         read_only_fields = ('file',)
 
-    # def get_reactions(self, mutation: Mutation):
-    #     a = mutation.reactions_grouped.values('result')
-    #     return ReactionSerializer(mutation.reactions).data
+    def get_covered_by(self, mutant: Mutation):
+        return MutantCoverageSerializer(mutant.mutant_coverage, many=True, read_only=True).data
 
     def get_source_code(self, mutation: Mutation):
         source_code = self.context.get('source_code_str')
-        if source_code is None:
-            source_code = get_source_code(mutation.file)
-        split_source = []
-        if source_code:
-            split_source = source_code['source'].split('\n')
-        try:
-            tmp_src = source_code.copy()
-            tmp_src['changed'] = []
-            start_line = mutation.start_line - 1  # starts counting from zero
-            if mutation.end_line > mutation.start_line:
-                # Split source code string into array
-                mutated_source_array = mutation.mutated_source_code.split('\n')
-
-                # Inclusive diff
-                diff = mutation.end_line - mutation.start_line + 1
-                for line_no in range(diff):
-                    if len(mutated_source_array) - 1 < line_no:  # If we cannot map any mutated source to the line,
-                        # remove the line
-                        del split_source[start_line + line_no]
-                        continue
-                    # Logic to copy indentations from line that we're replacing
-                    to_replace = mutated_source_array[line_no].lstrip()
-                    tab_count = split_source[start_line + line_no].count('\t')
-                    for i in range(tab_count):
-                        to_replace = '\t' + to_replace
-                    # ---
-
-                    # Replace the line
-                    split_source[start_line + line_no] = to_replace
-            else:
-                split_source[start_line] = mutation.mutated_source_code
-            tmp_src['source'] = "\n".join(split_source)
-        except IndexError:
-            return ""
-        return tmp_src
+        return mutation.get_mutated_source_code(source_code)
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -117,7 +38,7 @@ class FileSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_source_code(self, obj: File):
-        self.source_code_str = get_source_code(obj)
+        self.source_code_str = obj.get_source_code
         if self.source_code_str:
             return self.source_code_str
         return ""
@@ -141,8 +62,15 @@ class JobSerializer(serializers.ModelSerializer):
             mutations = file.pop('mutations')
             new_file = File.objects.create(job=job, **file)
             for mutation in mutations:
+                try:
+                    mutant_coverage = mutation.pop('covered_by')
+                except KeyError:
+                    mutant_coverage = []
                 new_mutation = Mutation.objects.create(file=new_file, **mutation)
                 new_file.mutations.add(new_mutation)
+                for covered_by in mutant_coverage:
+                    new_covered_by = MutantCoverage.objects.create(mutant=new_mutation, **covered_by)
+                    new_mutation.mutant_coverage.add(new_covered_by)
             job.files.add(new_file)
         return job
 
