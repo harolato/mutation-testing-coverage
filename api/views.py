@@ -33,7 +33,7 @@ class JobViewSet(viewsets.ModelViewSet):
                 serializer.create(serializer.validated_data)
             except ValueError as error:
                 return Response(data={'status': 'error', 'error': str(error)}, status=400)
-            return Response({'status': 'OK'})
+            return Response({'status': 'OK'}, status=200)
         else:
             return Response(data={'status': 'error', 'error': serializer.errors}, status=400)
 
