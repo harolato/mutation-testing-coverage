@@ -140,7 +140,9 @@ class SubmitGHIssueViewSet(APIView):
             file_source_code = mutant.file.get_source_code
             mutated_source_fragment = mutant.get_mutated_source_code(file_source_code)
 
-            diff_string = unified_diff(file_source_code['source'].split('\n'), mutated_source_fragment['source'].split('\n'), lineterm="", n=0)
+            diff_string = unified_diff(file_source_code['source'].split('\n'),
+                                       mutated_source_fragment['source'].split('\n'), lineterm="", n=10,
+                                       fromfile=mutant.file.path, tofile=mutant.file.path)
 
             markdown = "```diff\n" + "\n".join(diff_string) + "\n```"
 
