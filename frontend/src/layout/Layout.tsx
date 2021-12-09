@@ -3,7 +3,6 @@ import {AppBar, Box, Drawer, FormControlLabel, FormGroup, Grid, Switch, Toolbar,
 import SideMenu from "./SideMenu";
 import PageRoutes from "../components/Routes";
 import {useGlobalState} from "../providers/GlobalStateProvider";
-import {Outlet} from "@mui/icons-material";
 import NotificationToast from "../components/NotificationToast";
 
 const drawerWidth = 240;
@@ -32,7 +31,7 @@ const Layout = () => {
                                     mr: 2,
                                 }}
                             >
-                                Mutation Testing Coverage Visualisation Tool
+                                Mutation Testing & Test Amplification Tool
                             </Typography>
                         </Grid>
 

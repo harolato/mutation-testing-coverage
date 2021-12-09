@@ -118,6 +118,14 @@ class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(DetailProjectSerializer(instance=project, context={'request': self.request}).data)
 
 
+def create_issue():
+    pass
+
+
+def create_issue_comment():
+    pass
+
+
 class SubmitGHIssueViewSet(APIView):
     authentication_classes = (SessionAuthentication,)
     permission_classes = [IsAuthenticated]
@@ -136,7 +144,18 @@ class SubmitGHIssueViewSet(APIView):
         except ObjectDoesNotExist:
             errors.append('Mutation not found')
 
+        try:
+            gh = Github(login_or_token=user.user_profile.access_token)
+            gh_login = gh.get_user().login
+        except BadCredentialsException:
+            errors.append('Invalid Github Access Token')
+
         if len(errors) == 0:
+            gh_repo = gh.get_repo(f"{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}")
+            gh_labels_obj = gh_repo.get_labels()
+            gh_labels = []
+            for label in gh_labels_obj:
+                gh_labels.append(label.raw_data)
             file_source_code = mutant.file.get_source_code
             mutated_source_fragment = mutant.get_mutated_source_code(file_source_code)
 
@@ -144,10 +163,81 @@ class SubmitGHIssueViewSet(APIView):
                                        mutated_source_fragment['source'].split('\n'), lineterm="", n=10,
                                        fromfile=mutant.file.path, tofile=mutant.file.path)
 
-            markdown = "```diff\n" + "\n".join(diff_string) + "\n```"
+            mutant_url = request.build_absolute_uri(
+                f"/projects/{mutant.file.job.project.id}/jobs/{mutant.file.job.id}/files/{mutant.file.id}/mutant/{mutant.id}/")
 
-            return Response(data={'markdown': markdown})
+            markdown = "\n"
+            markdown += "```...NOTES HERE...```"
+            markdown += "\n\n"
+            markdown += f"[Open Mutant in Visualiser tool]({mutant_url})\n\n"
+            markdown += "\n\n"
+            markdown += f"```{mutant.description}```"
+            markdown += "\n\n"
+            markdown += f"https://github.com/{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}/blob/{mutant.file.job.git_commit_sha}/{mutant.file.path}#L{mutant.start_line}"
+            markdown += "\n\n```diff\n" + "\n".join(diff_string) + "\n```"
+
+            issue_title = f"Resolve mutants on {mutant.file.job.git_commit_sha[0:7]}"
+
+            gh_issue = None
+            if mutant.file.job.github_issue_id:
+                gh_issue = gh_repo.get_issue(mutant.file.job.github_issue_id)
+                gh_issue = {
+                    'html_url': gh_issue.html_url,
+                    'comments_ur': gh_issue.comments_url,
+                    'id': mutant.file.job.github_issue_id
+                }
+            return Response(
+                data={'markdown': markdown, 'issue_title': issue_title, 'labels': gh_labels, 'issue': gh_issue})
         return Response(data={'errors': errors}, status=400)
 
     def post(self, request, *args, **kwargs):
-        pass
+        user: User = self.request.user
+        errors = []
+        if "markdown" not in request.data:
+            errors.append("Missing markdown field")
+        if "assign_myself" not in request.data:
+            request.data['assign_myself'] = True
+
+        if "labels" not in request.data:
+            request.data['labels'] = []
+
+        if "issue_title" not in request.data:
+            request.data['issue_title'] = ""
+        try:
+            gh = Github(login_or_token=user.user_profile.access_token)
+            gh_login = gh.get_user().login
+        except BadCredentialsException:
+            errors.append('Invalid Github Access Token')
+
+        if user.id is None:
+            errors.append('User not found')
+        if kwargs['mutant_id'] is None:
+            errors.append('Mutation ID missing')
+        try:
+            mutant = Mutation.objects.get(pk=kwargs['mutant_id'])
+        except ObjectDoesNotExist:
+            errors.append('Mutation not found')
+
+        if len(errors) == 0:
+            assignee = None
+            if request.data['assign_myself']:
+                assignee = gh_login
+
+            gh_repo = gh.get_repo(f"{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}")
+            try:
+                if mutant.file.job.github_issue_id:
+                    gh_issue = gh_repo.get_issue(mutant.file.job.github_issue_id)
+                    gh_issue.create_comment(body=request.data['markdown'])
+                else:
+                    gh_issue = gh_repo.create_issue(body=request.data['markdown'], title=request.data['issue_title'],
+                                                    labels=request.data['labels'], assignee=assignee)
+                    job = mutant.file.job
+                    job.github_issue_id = gh_issue.number
+                    job.save()
+            except AssertionError as error:
+                return Response(data={'error': 'Failed to create Issue. Try again later: ' + error.__str__()},
+                                status=400)
+            return Response(
+                data={'issue_url': gh_issue.html_url, 'issue_id': gh_issue.number},
+                status=200)
+        return Response(data={'error': errors}, status=400)

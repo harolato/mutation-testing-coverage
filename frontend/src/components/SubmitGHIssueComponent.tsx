@@ -1,72 +1,198 @@
 import React, {useEffect, useState} from "react";
-import {Box, Modal, TextField, Typography} from "@mui/material";
+import {
+    Box,
+    Button, Chip,
+    CircularProgress,
+    FormControl, FormControlLabel,
+    InputLabel, LinearProgress, MenuItem,
+    OutlinedInput,
+    Select, SelectChangeEvent, Switch,
+    TextField,
+    Typography
+} from "@mui/material";
 import {Mutation} from "../types/Mutation";
 import {Project} from "../types/Project";
 import MDEditor from '@uiw/react-md-editor';
+import {Send} from "@mui/icons-material";
+import {useGlobalState} from "../providers/GlobalStateProvider";
+import Cookies from "js-cookie";
+import {Job} from "../types/Job";
 
-const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
 
 type PropsType = {
     mutant: Mutation,
     project: Project,
+    suggested_data: any,
+    success: any
 }
 
-type StateType = {
-    markdown: string
-}
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+            width: 250,
+        },
+    },
+};
 
 const SubmitGHIssueComponent = (props: PropsType) => {
 
-    let initialState: StateType = {
-        markdown: ''
-    }
-    const [open, setModal] = useState(false);
-    const [state, setState] = useState(initialState);
+
+    const [globalState, dispatch] = useGlobalState();
+    const [previewMD, setPreviewMD] = useState(true);
+    const [sendingIssue, setSendingIssue] = useState(false);
+    const [selectedLabels, setSelectedLabels] = useState<string[]>([])
+    const [assigneeMyself, setAssigneeMyself] = useState(true)
+    const [state, setState] = useState(null);
 
     useEffect(() => {
-        if (props.mutant) {
-            fetch(`/api/v1/submit_github_issue/${props.mutant.id}/`)
-                .then(res => res.json())
-                .then((res: StateType) => {
-                    setModal(true)
-                    setState(res)
-                })
-        }
-    }, [props.mutant])
+        setState( (prevVal: any) => props.suggested_data)
+    }, [props.suggested_data])
 
-    const handleClose = () => {
-        setModal(false);
+    const handleFetchErrors = (response: Response) => {
+        if (!response.ok) {
+            return Promise.reject(response);
+        }
+        return response.json();
     }
 
-    if (!open) {
-        return null;
+    const catchError = (response: any) => {
+        response.json().then((json: any) => {
+            dispatch({
+                ...globalState,
+                notification_toast: {
+                    open: true,
+                    type: 'error',
+                    message: json.error
+                }
+            });
+        })
+    }
+
+    const handleSendIssue = () => {
+        setSendingIssue(true);
+        fetch(`/api/v1/submit_github_issue/${props.mutant.id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': Cookies.get('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                markdown: state.markdown,
+                issue_title: state.issue_title,
+                labels: selectedLabels,
+                assign_myself: assigneeMyself
+            })
+        })
+            .then(handleFetchErrors)
+            .then((res: any) => {
+                setSendingIssue(false);
+                props.success(`Issue submitted: ${res.issue_url}`)
+            })
+            .catch(catchError)
+    }
+
+    const handleSelectedLabel = (event: SelectChangeEvent<typeof selectedLabels>) => {
+        const {
+            target: {value},
+        } = event;
+        setSelectedLabels(
+            // On autofill we get a the stringified value.
+            typeof value === 'string' ? value.split(',') : value,
+        );
+    }
+
+
+
+    const getLabelByName = (name: string) => {
+        return state.labels.find((label: any) => label.name === name);
+    }
+
+    if ( !state ) {
+        return null
     }
 
     return (
         <>
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style}>
-                    <Typography id="modal-modal-title" variant="h6" component="h2">
-                        Submit new issue on {props.project.git_repo_name} repository.
-                    </Typography>
-                    <MDEditor.Markdown source={state.markdown}/>
-                </Box>
-            </Modal>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+                Submit new issue on {props.project.git_repo_name} repository.
+            </Typography>
+            <TextField
+                fullWidth
+                id="outlined-basic"
+                label="Issue Title"
+                variant="outlined"
+                value={state.issue_title}
+                onChange={(e) => {
+                    setState({...state, issue_title: e.target.value})
+                }}
+                sx={{mb: 3, mt: 3}}
+            />
+            <FormControl sx={{mb: 3, mt: 3}} fullWidth>
+                <InputLabel id="demo-multiple-chip-label">Labels</InputLabel>
+                <Select
+                    labelId="demo-multiple-chip-label"
+                    id="demo-multiple-chip"
+                    multiple
+                    value={selectedLabels}
+                    onChange={handleSelectedLabel}
+                    input={<OutlinedInput id="select-multiple-chip" label="Labels"/>}
+                    renderValue={(selected) => (
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
+                            {selected.map((value) => (
+                                <Chip key={value} label={value} sx={{
+                                    backgroundColor: `#${getLabelByName(value).color}`
+                                }}/>
+                            ))}
+                        </Box>
+                    )}
+                    MenuProps={MenuProps}
+                >
+                    {state.labels.map((label: any) => (
+                        <MenuItem
+                            key={label.name}
+                            value={label.name}
+                        >
+                            {label.name}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+
+            <FormControlLabel sx={{mb: 3, mt: 3}} control={<Switch checked={assigneeMyself} onChange={() => {
+                setAssigneeMyself(!assigneeMyself)
+            }}/>} label="Assign to myself"/>
+
+            <Box sx={{
+                width: '100%',
+                height: 300,
+            }}>
+                <Button variant={"contained"} onClick={() => {
+                    setPreviewMD(!previewMD)
+                }}>{(previewMD ? "Edit" : "Preview")}</Button>
+                {
+                    (previewMD) ?
+                        <MDEditor.Markdown style={{
+                            height: 270,
+                            overflow: 'auto'
+                        }} source={state.markdown}/> :
+                        <TextField
+                            onChange={(e) => {
+                                setState({...state, markdown: e.target.value})
+                            }}
+                            fullWidth
+                            rows={11}
+                            multiline
+                            value={state.markdown}
+                        ></TextField>
+                }
+            </Box>
+            <br/>
+            <Button variant={"contained"} startIcon={(sendingIssue) ? <CircularProgress/> : <Send/>}
+                    disabled={sendingIssue} onClick={handleSendIssue}>Submit</Button>
         </>
     );
 

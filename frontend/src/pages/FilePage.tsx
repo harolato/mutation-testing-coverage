@@ -17,6 +17,7 @@ import ReactionComponent from "../components/ReactionComponent";
 import * as _ from "lodash";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import SubmitGHIssueComponent from "../components/SubmitGHIssueComponent";
+import GHCommentIssueComponent from "../components/GHCommentIssueComponent";
 
 type FileState = {
     file: File
@@ -39,6 +40,7 @@ const FilePage = () => {
     const [state, dispatch] = useGlobalState();
     let {fileId, projectId, jobId} = useParams();
     const [fixMutant, setFixMutant] = useState<Mutation>(null)
+    const [openFix, setOpenFix] = useState<boolean>(false)
 
     const handleMutationSelection = (mutation: Mutation) => {
         setFilepageState({...filepageState, current_mutation: mutation});
@@ -158,8 +160,13 @@ const FilePage = () => {
         })
         if (status == MutantStatusType.Fix) {
             setFixMutant(mutant)
+            setOpenFix(true)
         }
 
+    }
+
+    const closeFix = () => {
+      setOpenFix(false);
     }
 
     return (
@@ -222,7 +229,9 @@ const FilePage = () => {
                     }
                 </Grid>
             </Grid>
-            <SubmitGHIssueComponent
+            <GHCommentIssueComponent
+                onClose={closeFix}
+                open={openFix}
                 mutant={fixMutant}
                 project={filepageState.project}
             />
