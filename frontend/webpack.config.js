@@ -53,21 +53,21 @@ module.exports = {
     optimization: {
         minimize: true,
         minimizer: [new TerserPlugin()],
-        splitChunks: {
-            cacheGroups: {
-                monaco: {
-                    test: /[\\/]node_modules[\\/]monaco-editor/,
-                    name: "mc-monaco",
-                    chunks: "all",
-                    priority: 1,
-                },
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: "mc-vendor",
-                    chunks: "all",
-                },
-            },
-        },
+        // splitChunks: {
+        //     cacheGroups: {
+        //         monaco: {
+        //             test: /[\\/]node_modules[\\/]monaco-editor/,
+        //             name: "mc-monaco",
+        //             chunks: "all",
+        //             priority: 1,
+        //         },
+        //         vendor: {
+        //             test: /[\\/]node_modules[\\/]/,
+        //             name: "mc-vendor",
+        //             chunks: "all",
+        //         },
+        //     },
+        // },
     },
     plugins: [
         new MonacoWebpackPlugin({
