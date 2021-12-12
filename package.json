@@ -1,0 +1,10 @@
+{
+  "name": "mutation-testing-coverage",
+  "version": "1.0.0",
+  "dependencies": {
+  },
+  "scripts": {
+    "test": "jest",
+    "heroku-postbuild": "cd ./frontend && npm run build-prod"
+  }
+}

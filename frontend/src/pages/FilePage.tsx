@@ -1,240 +1,129 @@
-import * as React from "react";
-import {
-    Box, Button, ButtonGroup,
-    Grid,
-    Typography
-} from "@mui/material";
-import {File} from "../types/File";
-import {MutantStatusType, Mutation} from "../types/Mutation";
-import {Project} from "../types/Project";
-import {Job} from "../types/Job";
-import CodeEditor from "../components/CodeEditor";
-import CodeDiffEditor from "../components/CodeDiffEditor";
-import MutationsView from "../components/MutationsView";
+import React from "react";
 import {useEffect, useState} from "react";
-import {useParams} from "react-router-dom";
-import ReactionComponent from "../components/ReactionComponent";
-import * as _ from "lodash";
+import {Box, Grid, Typography} from "@mui/material";
+import {MutantStatusType, Mutation} from "../types/Mutation";
+import CodeEditor from "../components/CodeEditor";
+import MutationsView from "../components/MutationsView";
+import {Outlet, useNavigate, useParams} from "react-router-dom";
+import {first} from "lodash/fp";
 import {useGlobalState} from "../providers/GlobalStateProvider";
-import SubmitGHIssueComponent from "../components/SubmitGHIssueComponent";
-import GHCommentIssueComponent from "../components/GHCommentIssueComponent";
 
-type FileState = {
-    file: File
-    project: Project
-    job: Job
-    selected_line_mutations: Mutation[]
-    current_mutation: Mutation
-}
 
 const FilePage = () => {
 
-    const [filepageState, setFilepageState] = useState<FileState>({
-        file: null,
-        project: null,
-        job: null,
-        current_mutation: null,
-        selected_line_mutations: []
-    });
-
     const [state, dispatch] = useGlobalState();
-    let {fileId, projectId, jobId} = useParams();
-    const [fixMutant, setFixMutant] = useState<Mutation>(null)
-    const [openFix, setOpenFix] = useState<boolean>(false)
+    let {fileId, projectId, jobId, mutantId} = useParams();
+    const navigate = useNavigate();
+    const [pageDataLoaded, setPageDataLoaded] = useState(false);
 
-    const handleMutationSelection = (mutation: Mutation) => {
-        setFilepageState({...filepageState, current_mutation: mutation});
+    let getFirstSurvived = (mutants: Mutation[]) => {
+        return first(mutants.filter((mut: Mutation) => {
+            return mut.result !== 'K'
+        }))
+    }
+
+    let redirectToFirstMutant = (mutants: Mutation[]) => {
+        let first_ = getFirstSurvived(mutants);
+        if (first_) {
+            navigate(`mutant/${first_.id}/`);
+        }
     }
 
     const handleLineSelection = (mutations: Mutation[]) => {
-        setFilepageState({
-            ...filepageState,
+        if (mutations.length <= 0) return;
+
+        dispatch({
+            ...state,
             selected_line_mutations: mutations,
-            current_mutation: null
         });
+        redirectToFirstMutant(mutations);
+    }
+
+    let filterMutants: (mutants: Mutation[]) => Mutation[] = (mutants: Mutation[]) => {
+        if (!state.layout.show_killed_mutants) {
+            mutants = mutants.filter(mutant => mutant.result !== 'K');
+            mutants = mutants.filter(mutant => mutant.status !== MutantStatusType.Ignore)
+        }
+
+        return mutants.sort((a: Mutation, b: Mutation) => {
+            return a.start_line < b.start_line ? -1 : 1; // Sort Low -> High
+        });
+    }
+
+    let loadData = () => {
+        Promise.all([
+            fetch(`/api/v1/projects/${projectId}/`),
+            fetch(`/api/v1/files/${fileId}/`),
+            fetch(`/api/v1/jobs/${jobId}/`)
+        ])
+            .then(([r1, r2, r3]) => Promise.all([r1.json(), r2.json(), r3.json()]))
+            .then(([project, file, job]) => {
+                    dispatch({
+                        ...state,
+                        project: project,
+                        file: file,
+                        job: job,
+                        mutants: filterMutants(file.mutations),
+                    });
+                    setPageDataLoaded(true);
+                }
+            );
     }
 
     useEffect(() => {
-        fetch(`/api/v1/files/${fileId}/`)
-            .then(res => res.json())
-            .then(res => {
-                const first_survived: Mutation = _.first(res.mutations.filter((mut: Mutation) => {
-                    return mut.result === 'S'
-                }))
-                setFilepageState(prevState => ({
-                    ...prevState,
-                    file: res,
-                    current_mutation: first_survived
-                }));
-            })
-        fetch(`/api/v1/projects/${projectId}/`)
-            .then(res => res.json())
-            .then(res => setFilepageState(prevState => ({
-                ...prevState,
-                project: res
-            })))
-        fetch(`/api/v1/jobs/${jobId}/`)
-            .then(res => res.json())
-            .then(res => setFilepageState(prevState => ({
-                ...prevState,
-                job: res
-            })))
+        loadData();
     }, []);
 
-    const closeLine = () => {
-        setFilepageState({
-            ...filepageState,
-            current_mutation: null
-        });
-    }
-
-    const closeDiff = () => {
-        setFilepageState({
-            ...filepageState,
-            selected_line_mutations: []
-        })
-    }
-
-    const getMutants = () => {
-        return filepageState.file.mutations.filter((mutant) => {
-            return (state.layout.show_killed_mutants) ? true : mutant.result !== 'K'
-        });
-    }
-
-    const getCurrentMutantIndex = () => {
-        return getMutants().findIndex((mutant, a, i) => {
-            return mutant.id == filepageState.current_mutation.id;
-        })
-    }
-
-    const previousMutant = () => {
-        let previous = getCurrentMutantIndex() - 1;
-        if (previous < 0) {
-            return false;
-        }
-        setFilepageState({
-            ...filepageState,
-            current_mutation: getMutants()[previous]
-        });
-    }
-
-    const nextMutant = () => {
-        let next = getCurrentMutantIndex() + 1;
-        if (next > getMutants().length) {
-            return false;
-        }
-        setFilepageState({
-            ...filepageState,
-            current_mutation: getMutants()[next]
-        });
-    }
-
-    const hasNext = () => {
-        let next = getCurrentMutantIndex() + 1;
-        if (next > getMutants().length - 1) {
-            return false;
-        }
-        return true;
-    }
-
-    const hasPrevious = () => {
-        let next = getCurrentMutantIndex() - 1;
-        if (next < 0) {
-            return false;
-        }
-        return true;
-    }
-
-    const handleUpdateMutantStatus = (status: number, mutant: Mutation) => {
-        setFilepageState({
-            ...filepageState,
-            file: {
-                ...filepageState.file,
-                mutations: filepageState.file.mutations.map((mutation: Mutation) => {
-                    if (mutant.id == mutation.id) {
-                        mutation.status = status;
-                    }
-                    return mutation;
-                })
+    useEffect(() => {
+        if (pageDataLoaded) {
+            let filtered_mutants = filterMutants(state.file.mutations);
+            let found_mutant: Mutation = first(state.mutants.filter(mutant => mutant.id == mutantId));
+            if (!found_mutant) {
+                if (state.mutants.length > 0) {
+                    navigate(`/projects/${projectId}/jobs/${jobId}/files/${fileId}/mutant/${first(state.mutants).id}/`);
+                } else {
+                    navigate(`/projects/${projectId}/jobs/${jobId}/files/${fileId}/`);
+                }
             }
-        })
-        if (status == MutantStatusType.Fix) {
-            setFixMutant(mutant)
-            setOpenFix(true)
+            dispatch({
+                ...state,
+                mutants: filtered_mutants,
+                mutant: found_mutant
+            });
+
+            if (!mutantId) {
+                redirectToFirstMutant(filtered_mutants);
+            }
         }
+    }, [state.layout.show_killed_mutants, mutantId, state.selected_line_mutations, pageDataLoaded, state.file]);
 
-    }
-
-    const closeFix = () => {
-      setOpenFix(false);
+    if (state.file == null) {
+        return null;
     }
 
     return (
         <>
-            <Typography>File: {filepageState.file ? filepageState.file.path : <></>}</Typography>
+            <Typography>File {state.project.id}: {state.file ? state.file.path : <></>}</Typography>
             <Box>
             </Box>
             <Grid container spacing={2}>
                 <Grid item xs={6}>
-                    {filepageState.file ?
+                    {state.file ?
                         <CodeEditor
-                            file={filepageState.file}
+                            file={state.file}
+                            mutants={state.mutants}
                             onLineSelected={handleLineSelection}
-                            currently_viewing_mutant={filepageState.current_mutation}
+                            currently_viewing_mutant={state.mutant}
                         />
                         :
                         <></>}
                 </Grid>
                 <Grid item xs={6}>
-                    {filepageState.current_mutation ?
-                        <>
-                            <CodeDiffEditor
-                                original={filepageState.file.source_code}
-                                mutated={filepageState.current_mutation.source_code}
-                                mutation={filepageState.current_mutation}
-                            />
-                            <Grid container columns={12} justifyContent={"space-between"}>
-                                <Grid item xs={3}>
-                                    <ReactionComponent
-                                        mutant={filepageState.current_mutation}
-                                        updateMutantStatusState={handleUpdateMutantStatus}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <ButtonGroup variant={"contained"} aria-label="contained primary button group">
-                                        <Button disabled={!hasPrevious()}
-                                                onClick={() => previousMutant()}>Previous</Button>
-                                        <Button disabled={!hasNext()} onClick={() => nextMutant()}>Next</Button>
-                                    </ButtonGroup>
-                                </Grid>
-                            </Grid>
-
-                            <MutationsView
-                                mutations={getMutants()}
-                                currently_viewing={filepageState.current_mutation}
-                                onMutationSelected={handleMutationSelection}
-                            />
-                        </>
-                        :
-                        filepageState.selected_line_mutations.length > 0 ?
-                            <>
-                                <MutationsView
-                                    mutations={filepageState.selected_line_mutations}
-                                    currently_viewing={filepageState.current_mutation}
-                                    onMutationSelected={handleMutationSelection}
-                                />
-                            </>
-                            :
-                            <></>
-                    }
+                    <Outlet/>
+                    <MutationsView mutants={state.mutants} selected={state.selected_line_mutations}/>
                 </Grid>
             </Grid>
-            <GHCommentIssueComponent
-                onClose={closeFix}
-                open={openFix}
-                mutant={fixMutant}
-                project={filepageState.project}
-            />
+
         </>);
 }
 

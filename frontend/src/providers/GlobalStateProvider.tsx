@@ -1,7 +1,8 @@
-import * as React from "react";
+import React from "react";
 import {useEffect} from "react";
 import {User} from "../types/UserType";
 import {GlobalStateType} from "../types/GlobalStateType";
+import {Mutation} from "../types/Mutation";
 
 
 const initialGlobalState:GlobalStateType = {
@@ -14,7 +15,13 @@ const initialGlobalState:GlobalStateType = {
         open: false,
         type: 'success',
         message: ''
-    }
+    },
+    project: null,
+    job: null,
+    file: null,
+    mutant: null,
+    selected_line_mutations: [],
+    mutants: []
 }
 
 const GlobalStateContext = React.createContext(initialGlobalState);
@@ -46,7 +53,7 @@ export const GlobalStateProvider = ({ children } : {children: any}) => {
         );
     }
 
-export const useGlobalState = () => [
+export const useGlobalState: () => [GlobalStateType, any] = () => [
   React.useContext(GlobalStateContext),
   React.useContext(DispatchStateContext)
 ];

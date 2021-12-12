@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import {
     Box,
     List,
@@ -31,7 +31,7 @@ export default class SideMenu extends React.Component<any, any> {
                         </ListItemButton>
                     </ListItem>
                     <ListItem>
-                        <ListItemButton component={Link} to={"/projects"}>
+                        <ListItemButton component={Link} to={"/projects/"}>
                             <ListItemIcon>
                                 <FileOpen/>
                             </ListItemIcon>
@@ -39,7 +39,7 @@ export default class SideMenu extends React.Component<any, any> {
                         </ListItemButton>
                     </ListItem>
                     <ListItem>
-                        <ListItemButton component={Link} to={"/settings"}>
+                        <ListItemButton component={Link} to={"/settings/"}>
                             <ListItemIcon>
                                 <Settings/>
                             </ListItemIcon>

@@ -1,16 +1,17 @@
-import * as React from "react";
+import React from "react";
 import {useEffect, useRef, useState} from "react";
 import Editor, {Monaco} from "@monaco-editor/react";
 import {Chip, Stack} from "@mui/material";
-import * as _ from "lodash";
 import {editor, IRange} from "monaco-editor";
 import {Mutation} from "../types/Mutation";
 import {File} from "../types/File";
-import * as ReactDOM from "react-dom";
+import ReactDOM from "react-dom";
 import ScienceIcon from '@mui/icons-material/Science';
+import {groupBy, forEach, first} from "lodash/fp";
 import ICodeEditor = editor.ICodeEditor;
-import IModelDeltaDecoration = editor.IModelDeltaDecoration;
 import EditorLayoutInfo = editor.EditorLayoutInfo;
+import IModelDeltaDecoration = editor.IModelDeltaDecoration;
+import ContentWidgetPositionPreference = editor.ContentWidgetPositionPreference;
 import IContentWidget = editor.IContentWidget;
 
 
@@ -18,40 +19,124 @@ interface CodeEditorProps {
     file: File,
     onLineSelected: any
     currently_viewing_mutant: Mutation
+    mutants: Mutation[]
 }
 
 const CodeEditor = (props: CodeEditorProps) => {
 
     const editorRef = useRef<ICodeEditor>();
-
     const [editorLoaded, setEditorLoaded] = useState(false);
-
-    let decorations: IModelDeltaDecoration[] = [];
+    const [contentWidgets, setContentWidgets] = useState<IContentWidget[]>([]);
 
     useEffect(() => {
-        if (editorLoaded && props.currently_viewing_mutant) {
-            // Jump to first survived mutant
-            let range: IRange = {
-                startLineNumber: props.currently_viewing_mutant.start_line,
-                endLineNumber: props.currently_viewing_mutant.end_line,
-                startColumn: 0,
-                endColumn: 0
-            };
-            editorRef.current.revealRangeInCenter(range);
-
-            // let decoration: IModelDeltaDecoration = {
-            //     range: range,
-            //     options: {
-            //         className: 'myGlyphMarginClass',
-            //         isWholeLine: false,
-            //         glyphMarginClassName: 'myGlyphMarginClass'
-            //     }
-            // }
-            // decorations.push(decoration)
-            // editorRef.current.deltaDecorations([], [decoration]);
-
+        if (editorLoaded) {
+            if (props.currently_viewing_mutant) {
+                // Jump to first survived mutant
+                let range: IRange = {
+                    startLineNumber: props.currently_viewing_mutant.start_line,
+                    endLineNumber: props.currently_viewing_mutant.end_line,
+                    startColumn: 0,
+                    endColumn: 0
+                };
+                editorRef.current.revealRangeInCenter(range);
+            }
         }
-    }, [props.currently_viewing_mutant])
+    }, [props.currently_viewing_mutant]);
+
+    useEffect(() => {
+        if (editorLoaded) {
+            highlightSurvivedMutants();
+        }
+    }, [props.mutants, editorLoaded])
+
+    useEffect(() => {
+        return () => {
+            setEditorLoaded(false);
+            editorRef.current = null;
+            clearWidgets();
+        }
+    }, []);
+
+    let clearWidgets = () => {
+        contentWidgets.map(widget => {
+            editorRef.current.removeContentWidget(widget);
+            return widget;
+        });
+        setContentWidgets([]);
+    }
+
+    let highlightSurvivedMutants = () => {
+        clearWidgets();
+
+        let decorations: IModelDeltaDecoration[] = [];
+        let lines = groupBy((mutation: Mutation) => {
+            return mutation.start_line;
+
+        }, props.mutants);
+        let added_widgets:IContentWidget[] = [];
+        forEach(value => {
+            forEach( (val: Mutation) => {
+                if (
+                    val.start_line > editorRef.current.getModel().getLineCount() ||
+                    val.end_line > editorRef.current.getModel().getLineCount()
+                ) {
+                    return false;
+                }
+                let decoration: IModelDeltaDecoration = {
+                    range: {
+                        startLineNumber: val.start_line,
+                        startColumn: 1,
+                        endLineNumber: val.end_line,
+                        endColumn: 1
+                    },
+                    options: {
+                        className: 'myContentClass',
+                        isWholeLine: true
+                    }
+                }
+                decorations.push(decoration)
+            }, value)
+
+            if (
+                value[0].start_line > editorRef.current.getModel().getLineCount() ||
+                value[0].end_line > editorRef.current.getModel().getLineCount()
+            ) {
+                return false;
+            }
+            // Add a content widget (scrolls inline with text)
+            let contentWidget: IContentWidget = {
+                allowEditorOverflow: true,
+                afterRender() {
+                    updateAllMutationButtonsPosition(editorRef.current.getLayoutInfo());
+                },
+                getId: function () {
+                    return 'line-' + value[0].start_line;
+                },
+                getDomNode: function () {
+                    if (!this.domNode) {
+                        this.domNode = renderChip(value);
+                    }
+                    return this.domNode;
+                },
+                getPosition: function () {
+                    return {
+                        position: {
+                            lineNumber: value[0].start_line,
+                            column: 0,
+                        },
+                        preference: [
+                            ContentWidgetPositionPreference.EXACT,
+                            ContentWidgetPositionPreference.EXACT
+                        ]
+                    };
+                }
+            };
+            editorRef.current.addContentWidget(contentWidget);
+            added_widgets.push(contentWidget);
+        }, lines);
+        setContentWidgets(added_widgets);
+        editorRef.current.deltaDecorations([], decorations);
+    }
 
     const options = {
         glyphMargin: true,
@@ -64,14 +149,6 @@ const CodeEditor = (props: CodeEditorProps) => {
         },
         readOnly: true,
     };
-
-    let lines = _.groupBy(props.file.mutations, (mutation: any) => {
-        return mutation.start_line;
-    });
-
-    const first_survived = _.first(props.file.mutations.filter((mut) => {
-        return mut.result === 'S'
-    }))
 
     const renderChip = (mutations: Mutation[]): HTMLDivElement => {
         let el = document.createElement('div');
@@ -126,72 +203,16 @@ const CodeEditor = (props: CodeEditorProps) => {
 
     const handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
         editorRef.current = editor;
-
-        _.forEach(lines, (value: any, key: any) => {
-            _.forEach(value, (val) => {
-                if (
-                    val.start_line > editor.getModel().getLineCount() ||
-                    val.end_line > editor.getModel().getLineCount()
-                ) {
-                    return false;
-                }
-                let decoration: IModelDeltaDecoration = {
-                    range: new monaco.Range(val.start_line, 1, val.end_line, 1),
-                    options: {
-                        className: 'myContentClass',
-                        isWholeLine: true
-                    }
-                }
-                decorations.push(decoration)
-            })
-
-            if (
-                value[0].start_line > editor.getModel().getLineCount() ||
-                value[0].end_line > editor.getModel().getLineCount()
-            ) {
-                return false;
-            }
-            // Add a content widget (scrolls inline with text)
-            let contentWidget: IContentWidget = {
-                allowEditorOverflow: true,
-                afterRender() {
-                    updateAllMutationButtonsPosition(editor.getLayoutInfo());
-                },
-                getId: function () {
-                    return 'line-' + value[0].start_line;
-                },
-                getDomNode: function () {
-                    if (!this.domNode) {
-                        this.domNode = renderChip(value);
-                    }
-                    return this.domNode;
-                },
-                getPosition: function () {
-                    return {
-                        position: {
-                            lineNumber: value[0].start_line,
-                            column: 0,
-                        },
-                        preference: [
-                            monaco.editor.ContentWidgetPositionPreference.EXACT,
-                            monaco.editor.ContentWidgetPositionPreference.EXACT
-                        ]
-                    };
-                }
+        const first_survived = first(props.mutants.filter(mut => mut.result === 'S'))
+        if (first_survived) {
+            let range: IRange = {
+                startLineNumber: first_survived.start_line,
+                endLineNumber: first_survived.end_line,
+                startColumn: 0,
+                endColumn: 0
             };
-            editor.addContentWidget(contentWidget);
-        });
-        editor.deltaDecorations([], decorations);
-
-        // Jump to first survived mutant
-        let range: IRange = {
-            startLineNumber: first_survived.start_line,
-            endLineNumber: first_survived.end_line,
-            startColumn: 0,
-            endColumn: 0
-        };
-        editor.revealRangeInCenter(range);
-
+            editorRef.current.revealRangeInCenter(range);
+        }
         setEditorLoaded(true);
 
     };

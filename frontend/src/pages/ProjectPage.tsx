@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
 import {Link, useParams} from "react-router-dom";
 import {Project} from "../types/Project";
@@ -47,7 +47,7 @@ const ProjectPage = () => {
                             <TableRow key={job.id}>
                                 <TableCell>{job.id}</TableCell>
                                 <TableCell>
-                                    <Link to={`/projects/${job.project}/jobs/${job.id}`}>
+                                    <Link to={`/projects/${job.project}/jobs/${job.id}/`}>
                                         {job.git_commit_sha}
                                     </Link>
                                 </TableCell>

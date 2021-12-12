@@ -1,12 +1,11 @@
-import * as React from "react";
-import {DiffEditor, Monaco, useMonaco} from "@monaco-editor/react";
-import {editor, IRange, languages} from "monaco-editor";
+import React from "react";
+import {DiffEditor, Monaco} from "@monaco-editor/react";
+import {editor, IRange} from "monaco-editor";
 import {SourceCode} from "../types/SourceCode";
 import {Mutation} from "../types/Mutation";
 import IStandaloneDiffEditorConstructionOptions = editor.IStandaloneDiffEditorConstructionOptions;
 import IDiffEditor = editor.IDiffEditor;
 import {useEffect, useRef, useState} from "react";
-import setMonarchTokensProvider = languages.setMonarchTokensProvider;
 
 
 interface CodeDiffEditorProps {

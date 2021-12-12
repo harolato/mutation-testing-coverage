@@ -1,5 +1,5 @@
-import * as React from "react";
-import {Avatar, Box, Button, FormControl, Link, TextField, Typography} from "@mui/material";
+import React from "react";
+import {Avatar, Box, Button, FormControl, LinearProgress, Link, TextField, Typography} from "@mui/material";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import {useEffect, useState} from "react";
 import {UserProfile} from "../types/UserType";
@@ -98,7 +98,7 @@ const ProfilePage = () => {
     </Box></>
 
     if (state.loading) {
-        return (<>Loading</>);
+        return (<LinearProgress/>);
     } else {
         if (githubUser) {
             github_profile = <>

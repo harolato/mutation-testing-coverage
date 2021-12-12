@@ -16,7 +16,7 @@ export enum MutantStatusType {
 }
 
 export type Mutation = {
-    id: number;
+    id: number | string;
     file: number | File;
     sequence_number: number;
     description: string;

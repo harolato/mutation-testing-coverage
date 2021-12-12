@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import {AppBar, Box, Drawer, FormControlLabel, FormGroup, Grid, Switch, Toolbar, Typography} from "@mui/material";
 import SideMenu from "./SideMenu";
 import PageRoutes from "../components/Routes";

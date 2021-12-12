@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import {
     Avatar,
     Box, Button,
@@ -77,7 +77,7 @@ const ProjectsPage = () => {
                         </Typography>
                         <List>
                             {state.projects.map((project: Project, i: React.Key) =>
-                                <ListItem component={Link} to={`/projects/${project.id}`} key={i}>
+                                <ListItem component={Link} to={`/projects/${project.id}/`} key={i}>
                                     <ListItemAvatar>
                                         <Avatar>
                                             <Folder/>

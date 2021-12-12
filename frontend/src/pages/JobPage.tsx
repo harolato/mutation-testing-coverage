@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
 import {Link, useParams} from "react-router-dom";
 import {Job} from "../types/Job";
@@ -48,7 +48,7 @@ const JobPage = () => {
                                 <TableCell>{file.id}</TableCell>
                                 <TableCell>
                                     <Link
-                                        to={`/projects/${projectId}/jobs/${file.job}/files/${file.id}`}>
+                                        to={`/projects/${projectId}/jobs/${file.job}/files/${file.id}/`}>
                                         {file.path}
                                     </Link>
                                 </TableCell>

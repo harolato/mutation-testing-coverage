@@ -1,5 +1,5 @@
-import * as React from "react";
-import {Mutation, MutationResult} from "../types/Mutation";
+import React from "react";
+import {MutantStatusType, Mutation, MutationResult} from "../types/Mutation";
 import {
     Button,
     IconButton,
@@ -12,48 +12,43 @@ import {
     TableRow
 } from "@mui/material";
 import {FileOpen} from "@mui/icons-material";
-import {useGlobalState} from "../providers/GlobalStateProvider";
 import {useEffect, useState} from "react";
+import {Link, useParams} from "react-router-dom";
+import {first} from "lodash";
+import {useGlobalState} from "../providers/GlobalStateProvider";
 
-type MutationsViewProps = {
-    mutations: Mutation[]
-    currently_viewing: Mutation
-    onMutationSelected: any
+type MutViewProps = {
+    mutants: Mutation[],
+    selected: Mutation[],
 }
 
-const MutationsView = (props: MutationsViewProps) => {
+const MutationsView = (props:MutViewProps) => {
+    const [currentlyViewing, setCurrentlyViewing] = useState<string>('0')
+    let {mutantId} = useParams();
 
-    const [state, dispatch] = useGlobalState()
-
-    const [mutations, setMutations] = useState<Mutation[]>(props.mutations)
-
-    const [currentlyViewing, setCurrentlyViewing] = useState(0)
-
-    const handleChooseMutation = (mutation: Mutation) => {
-        props.onMutationSelected(mutation);
-    }
-
-    const [viewUpdated, setViewUpdated] = useState(false)
-
+    const [state, dispatch] = useGlobalState();
     useEffect(() => {
-        let data = props.mutations;
-        if (!state.layout.show_killed_mutants) {
-            data = data.filter((row) => {
-                return row.result !== 'K';
-            });
-        }
-        if ( props.currently_viewing != null ) {
-            setCurrentlyViewing(props.currently_viewing.id);
-        }
-        setMutations(data);
-    }, [state.layout.show_killed_mutants, props.mutations, props.currently_viewing]);
+        setCurrentlyViewing(mutantId);
+    }, [mutantId]);
+
+    const clearLineFilter = () => {
+        dispatch({
+            ...state,
+            selected_line_mutations: []
+        });
+    }
 
     return (
         <div className={"mutation-view"}>
+            {props.selected.length > 0 ? (<>
+                        Filtered by Line: {first(props.selected).start_line}
+                        <Button variant={"contained"} onClick={clearLineFilter}>Clear</Button>
+                    </>):(<></>)}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
+                            <TableCell>Status</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Result</TableCell>
                             <TableCell>Source</TableCell>
@@ -63,17 +58,16 @@ const MutationsView = (props: MutationsViewProps) => {
                     </TableHead>
                     <TableBody>
                         {
-                            mutations.map((mutation) =>
+                            ((props.selected.length > 0)? props.selected: props.mutants).map((mutation) =>
                                 <TableRow
                                     key={mutation.id}
                                     className={"mutation-view"}
-                                    sx={{
-                                        backgroundColor: currentlyViewing == mutation.id? "rgba(0,255,0, 0.3)":""
-                                    }}
                                 >
-                                    <TableCell>Description: {mutation.description}</TableCell>
+                                    <TableCell>{MutantStatusType[mutation.status]}</TableCell>
+                                    <TableCell>{mutation.id}</TableCell>
+                                    <TableCell>{mutation.description}</TableCell>
                                     <TableCell>{MutationResult[mutation.result]}</TableCell>
-                                    <TableCell>Source: {mutation.mutated_source_code}</TableCell>
+                                    <TableCell>{mutation.mutated_source_code}</TableCell>
                                     <TableCell>
                                         {
                                             mutation.start_line != mutation.end_line ?
@@ -82,11 +76,13 @@ const MutationsView = (props: MutationsViewProps) => {
                                         }
                                     </TableCell>
                                     <TableCell>
-                                        <IconButton
-                                            disabled={currentlyViewing == mutation.id}
-                                            onClick={(e) => handleChooseMutation(mutation)}>
-                                            <FileOpen></FileOpen>
-                                        </IconButton>
+                                        <Link to={`mutant/${mutation.id}/`}>
+                                            <IconButton
+                                                disabled={currentlyViewing == mutation.id}
+                                            >
+                                                <FileOpen></FileOpen>
+                                            </IconButton>
+                                        </Link>
                                     </TableCell>
                                 </TableRow>
                             )
