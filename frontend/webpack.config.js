@@ -46,7 +46,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: "[name].[contenthash].bundle.js",
+        filename: "[name].bundle.js",
         path: path.resolve(__dirname, 'static/frontend'),
         publicPath: '/static/frontend/',
     },
@@ -72,7 +72,7 @@ module.exports = {
     plugins: [
         new MonacoWebpackPlugin({
             "languages": ['st'],
-            filename: "[name].[contenthash].bundle.js",
+            filename: "[name].bundle.js",
             "features": [
                 '!accessibilityHelp', '!anchorSelect', '!bracketMatching', '!caretOperations', '!clipboard',
                 '!codeAction', '!codelens', '!colorPicker', '!comment', '!contextmenu', '!coreCommands',
