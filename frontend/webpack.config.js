@@ -1,6 +1,6 @@
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
-// const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     stats: "normal",
@@ -22,14 +22,31 @@ module.exports = {
             {
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],
-            }
+            },
+            // --- Loaders for monaco ---
+            // {
+            //     test: /\.ts?$/,
+            //     include: path.join(__dirname, "node_modules", "monaco-editor"),
+            //     use: ["awesome-typescript-loader"],
+            // },
+            // {
+            //     test: /\.css$/,
+            //     include: path.join(__dirname, "node_modules", "monaco-editor"),
+            //     use: ["style-loader", "css-loader"],
+            // },
+            // {
+            //     test: /\.ttf$/,
+            //     include: path.join(__dirname, "node_modules", "monaco-editor"),
+            //     use: ["file-loader"],
+            // },
+            // ---
         ],
     },
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: 'bundle.js',
+        filename: "[name].[contenthash].bundle.js",
         path: path.resolve(__dirname, 'static/frontend'),
         publicPath: '/static/frontend/',
     },
@@ -38,30 +55,37 @@ module.exports = {
         minimizer: [new TerserPlugin()],
         splitChunks: {
             cacheGroups: {
-                monacoCommon: {
+                monaco: {
                     test: /[\\/]node_modules[\\/]monaco-editor/,
-                    name: 'monaco-editor-common',
-                    chunks: 'async'
-                }
-            }
-        }
+                    name: "mc-monaco",
+                    chunks: "all",
+                    priority: 1,
+                },
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: "mc-vendor",
+                    chunks: "all",
+                },
+            },
+        },
     },
     plugins: [
-        // new MonacoWebpackPlugin({
-        //     "languages": ['st', 'javascript', 'python'],
-        //     "features": [
-        //         '!accessibilityHelp', '!anchorSelect', '!bracketMatching', '!caretOperations', '!clipboard',
-        //         '!codeAction', '!codelens', '!colorPicker', '!comment', '!contextmenu', '!coreCommands',
-        //         '!cursorUndo', '!dnd', '!documentSymbols', '!find', '!folding', '!fontZoom', '!format',
-        //         '!gotoError', '!gotoLine', '!gotoSymbol', '!hover', '!iPadShowKeyboard', '!inPlaceReplace',
-        //         '!indentation', '!inlayHints', '!inlineCompletions', '!inspectTokens', '!lineSelection',
-        //         '!linesOperations', '!linkedEditing', '!links', '!multicursor', '!parameterHints', '!quickCommand',
-        //         '!quickHelp', '!quickOutline', '!referenceSearch', '!rename', '!smartSelect', '!snippets', '!suggest',
-        //         '!toggleHighContrast', '!toggleTabFocusMode', '!transpose', '!unicodeHighlighter',
-        //         '!unusualLineTerminators', '!viewportSemanticTokens', '!wordHighlighter', '!wordOperations',
-        //         '!wordPartOperations',
-        //     ],
-        //     "publicPath": '/static/frontend/',
-        // }),
+        new MonacoWebpackPlugin({
+            "languages": ['st'],
+            filename: "[name].[contenthash].bundle.js",
+            "features": [
+                '!accessibilityHelp', '!anchorSelect', '!bracketMatching', '!caretOperations', '!clipboard',
+                '!codeAction', '!codelens', '!colorPicker', '!comment', '!contextmenu', '!coreCommands',
+                '!cursorUndo', '!dnd', '!documentSymbols', '!find', '!folding', '!fontZoom', '!format',
+                '!gotoError', '!gotoLine', '!gotoSymbol', '!hover', '!iPadShowKeyboard', '!inPlaceReplace',
+                '!indentation', '!inlayHints', '!inlineCompletions', '!inspectTokens', '!lineSelection',
+                '!linesOperations', '!linkedEditing', '!links', '!multicursor', '!parameterHints', '!quickCommand',
+                '!quickHelp', '!quickOutline', '!referenceSearch', '!rename', '!smartSelect', '!snippets', '!suggest',
+                '!toggleHighContrast', '!toggleTabFocusMode', '!transpose', '!unicodeHighlighter',
+                '!unusualLineTerminators', '!viewportSemanticTokens', '!wordHighlighter', '!wordOperations',
+                '!wordPartOperations',
+            ],
+            "publicPath": '/static/frontend/',
+        }),
     ],
 };

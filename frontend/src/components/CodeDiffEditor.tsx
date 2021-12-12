@@ -1,11 +1,10 @@
 import React from "react";
-import {DiffEditor, Monaco} from "@monaco-editor/react";
 import {editor, IRange} from "monaco-editor";
 import {SourceCode} from "../types/SourceCode";
 import {Mutation} from "../types/Mutation";
-import IStandaloneDiffEditorConstructionOptions = editor.IStandaloneDiffEditorConstructionOptions;
 import IDiffEditor = editor.IDiffEditor;
 import {useEffect, useRef, useState} from "react";
+import {MonacoDiffEditor} from "react-monaco-editor";
 
 
 interface CodeDiffEditorProps {
@@ -20,7 +19,7 @@ const CodeDiffEditor = (props:CodeDiffEditorProps) => {
 
     const [editorLoaded, setEditorLoaded] = useState(false);
 
-    const options:IStandaloneDiffEditorConstructionOptions = {
+    const options:any = {
             lineNumbers: (number: number) => {
                 return "" + number;
             },
@@ -44,7 +43,7 @@ const CodeDiffEditor = (props:CodeDiffEditorProps) => {
         }
     }, [props.mutation.id])
 
-    const handleDiffEditorDidMount = (editor: IDiffEditor, monaco: Monaco) => {
+    const handleDiffEditorDidMount = (editor: IDiffEditor) => {
         editorRef.current = editor;
         setEditorLoaded(true);
         let range: IRange = {
@@ -58,13 +57,13 @@ const CodeDiffEditor = (props:CodeDiffEditorProps) => {
 
     return(
         <>
-            <DiffEditor
+            <MonacoDiffEditor
                 original={props.original.source}
-                modified={props.mutated.source}
+                value={props.mutated.source}
                 language={props.original.file_type.id}
                 height="50vh"
                 options={options}
-                onMount={handleDiffEditorDidMount}
+                editorDidMount={handleDiffEditorDidMount}
             />
         </>);
 

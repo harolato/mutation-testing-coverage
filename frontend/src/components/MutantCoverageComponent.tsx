@@ -34,7 +34,7 @@ const MutantCoverageComponent = (props: MutantCoverageComponentPropsType) => {
                         <Item>
                             <Link
                                 target={"_blank"}
-                                href={`https://github.com/tree/${state.project.git_repo_owner}/${state.project.git_repo_name}/${state.job.git_commit_sha}/${covered.file}#L${covered.line}`}>
+                                href={`https://github.com/${state.project.git_repo_owner}/${state.project.git_repo_name}/tree/${state.job.git_commit_sha}/${covered.file}#L${covered.line}`}>
                                 {covered.test_method_name}
                             </Link>
                         </Item>

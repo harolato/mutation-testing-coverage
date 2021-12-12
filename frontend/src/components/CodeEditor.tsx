@@ -1,6 +1,6 @@
 import React from "react";
 import {useEffect, useRef, useState} from "react";
-import Editor, {Monaco} from "@monaco-editor/react";
+import MonacoEditor from 'react-monaco-editor';
 import {Chip, Stack} from "@mui/material";
 import {editor, IRange} from "monaco-editor";
 import {Mutation} from "../types/Mutation";
@@ -13,9 +13,6 @@ import EditorLayoutInfo = editor.EditorLayoutInfo;
 import IModelDeltaDecoration = editor.IModelDeltaDecoration;
 import ContentWidgetPositionPreference = editor.ContentWidgetPositionPreference;
 import IContentWidget = editor.IContentWidget;
-import {loader} from "@monaco-editor/react";
-
-loader.config({paths: {vs: '/static/frontend/monaco-editor/min/vs'}})
 
 interface CodeEditorProps {
     file: File,
@@ -213,19 +210,19 @@ const CodeEditor = (props: CodeEditorProps) => {
         }
     }
 
-    const handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
+    const handleEditorDidMount = (editor: ICodeEditor) => {
         editorRef.current = editor;
         setEditorLoaded(true);
     };
 
     return (
         <>
-            <Editor
+            <MonacoEditor
                 height="50vh"
                 options={options}
                 language={props.file.source_code.file_type.id}
                 value={props.file.source_code.source}
-                onMount={handleEditorDidMount}
+                editorDidMount={handleEditorDidMount}
             />
         </>);
 
