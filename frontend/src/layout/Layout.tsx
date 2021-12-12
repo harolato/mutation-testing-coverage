@@ -4,6 +4,7 @@ import SideMenu from "./SideMenu";
 import PageRoutes from "../components/Routes";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import NotificationToast from "../components/NotificationToast";
+import BreadcrumbsComponent from "../components/BreadcrumbsComponent";
 
 const drawerWidth = 240;
 
@@ -42,9 +43,9 @@ const Layout = () => {
                             <FormGroup>
                                 <FormControlLabel
                                     control={<Switch
-                                    color="warning"
-                                    checked={state.layout.show_killed_mutants}
-                                    onChange={() => changeShowMutants()}
+                                        color="warning"
+                                        checked={state.layout.show_killed_mutants}
+                                        onChange={() => changeShowMutants()}
                                     />} label="Show Killed mutants"/>
                             </FormGroup>
                         </Grid>

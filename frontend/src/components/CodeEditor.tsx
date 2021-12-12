@@ -13,7 +13,9 @@ import EditorLayoutInfo = editor.EditorLayoutInfo;
 import IModelDeltaDecoration = editor.IModelDeltaDecoration;
 import ContentWidgetPositionPreference = editor.ContentWidgetPositionPreference;
 import IContentWidget = editor.IContentWidget;
+import {loader} from "@monaco-editor/react";
 
+loader.config({paths: {vs: '/static/frontend/monaco-editor/min/vs'}})
 
 interface CodeEditorProps {
     file: File,
@@ -45,6 +47,16 @@ const CodeEditor = (props: CodeEditorProps) => {
 
     useEffect(() => {
         if (editorLoaded) {
+            const first_survived = first(props.mutants.filter(mut => mut.result === 'S'))
+            if (first_survived) {
+                let range: IRange = {
+                    startLineNumber: first_survived.start_line,
+                    endLineNumber: first_survived.end_line,
+                    startColumn: 0,
+                    endColumn: 0
+                };
+                editorRef.current.revealRangeInCenter(range);
+            }
             highlightSurvivedMutants();
         }
     }, [props.mutants, editorLoaded])
@@ -73,9 +85,9 @@ const CodeEditor = (props: CodeEditorProps) => {
             return mutation.start_line;
 
         }, props.mutants);
-        let added_widgets:IContentWidget[] = [];
+        let added_widgets: IContentWidget[] = [];
         forEach(value => {
-            forEach( (val: Mutation) => {
+            forEach((val: Mutation) => {
                 if (
                     val.start_line > editorRef.current.getModel().getLineCount() ||
                     val.end_line > editorRef.current.getModel().getLineCount()
@@ -203,18 +215,7 @@ const CodeEditor = (props: CodeEditorProps) => {
 
     const handleEditorDidMount = (editor: ICodeEditor, monaco: Monaco) => {
         editorRef.current = editor;
-        const first_survived = first(props.mutants.filter(mut => mut.result === 'S'))
-        if (first_survived) {
-            let range: IRange = {
-                startLineNumber: first_survived.start_line,
-                endLineNumber: first_survived.end_line,
-                startColumn: 0,
-                endColumn: 0
-            };
-            editorRef.current.revealRangeInCenter(range);
-        }
         setEditorLoaded(true);
-
     };
 
     return (

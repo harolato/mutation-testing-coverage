@@ -5,11 +5,12 @@ import {useEffect, useState} from "react";
 import {UserProfile} from "../types/UserType";
 import {GithubUser} from "../types/GitHubTypes";
 import Cookies from 'js-cookie';
+import {useLoading} from "../providers/LoadingStateProvider";
 
 const ProfilePage = () => {
 
     const [state, dispatch] = useGlobalState();
-
+    const {loading, setLoading} = useLoading();
     const [githubUser, setGithubUser] = useState<GithubUser>(null)
 
     const [accessTokenValue, setAccessTokenValue] = useState("");
@@ -33,6 +34,8 @@ const ProfilePage = () => {
             });
         })
     }
+
+
 
     useEffect(() => {
         if (state.user != null && state.user.user_profile && state.user.user_profile.access_token) {
@@ -97,7 +100,7 @@ const ProfilePage = () => {
         </FormControl>
     </Box></>
 
-    if (state.loading) {
+    if (loading) {
         return (<LinearProgress/>);
     } else {
         if (githubUser) {
@@ -110,6 +113,10 @@ const ProfilePage = () => {
                     Account</Button>
             </>
         }
+    }
+
+    if ( !state.user ) {
+        return null;
     }
 
     return (

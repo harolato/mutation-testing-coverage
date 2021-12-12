@@ -12,7 +12,6 @@ export type GlobalLayoutStateType = {
 export type GlobalStateType = {
     user: User
     layout: GlobalLayoutStateType,
-    loading: boolean,
     notification_toast: NotificationToastType,
     project: Project | null,
     job: Job | null,

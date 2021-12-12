@@ -1,59 +1,45 @@
+import {createContext, useContext, useState} from "react";
 import React from "react";
-import {useEffect} from "react";
-import {User} from "../types/UserType";
 import {GlobalStateType} from "../types/GlobalStateType";
-import {Mutation} from "../types/Mutation";
 
+const GlobalStateContext = React.createContext([
+    null,
+    null,
+]);
 
-const initialGlobalState:GlobalStateType = {
-    user: null,
+const initialState: GlobalStateType = {
     layout: {
         show_killed_mutants: false
     },
-    loading: true,
     notification_toast: {
         open: false,
         type: 'success',
         message: ''
     },
+    // Database models
+    user: null,
     project: null,
     job: null,
     file: null,
+
+    // Computed
     mutant: null,
     selected_line_mutations: [],
     mutants: []
 }
 
-const GlobalStateContext = React.createContext(initialGlobalState);
-const DispatchStateContext = React.createContext(undefined);
+export const GlobalStateProvider = ({children}: { children: any }) => {
+    const [state, dispatch] = useState(initialState);
+    const value = [state, dispatch];
+    return (
+        <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>
+    );
+}
 
-export const GlobalStateProvider = ({ children } : {children: any}) => {
-        const [state, dispatch] = React.useReducer(
-            (state: GlobalStateType, newValue: GlobalStateType) => ({...state, ...newValue}),
-            initialGlobalState
-        );
-        useEffect(() => {
-            fetch('/api/v1/user/')
-                .then(res => res.json())
-                .then((user: User) => {
-                    dispatch({
-                        ...state,
-                        user: user,
-                        loading: false
-                    })
-                });
-
-        }, [])
-        return (
-            <GlobalStateContext.Provider value={state}>
-                <DispatchStateContext.Provider value={dispatch}>
-                    {children}
-                </DispatchStateContext.Provider>
-            </GlobalStateContext.Provider>
-        );
+export function useGlobalState() {
+    const context = useContext(GlobalStateContext);
+    if (!context) {
+        throw new Error("useLoading must be used within LoadingProvider");
     }
-
-export const useGlobalState: () => [GlobalStateType, any] = () => [
-  React.useContext(GlobalStateContext),
-  React.useContext(DispatchStateContext)
-];
+    return context;
+}

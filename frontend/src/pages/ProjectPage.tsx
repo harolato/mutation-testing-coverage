@@ -1,33 +1,17 @@
 import React from "react";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
-import {Link, useParams} from "react-router-dom";
-import {Project} from "../types/Project";
+import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography} from "@mui/material";
+import {Link} from "react-router-dom";
 import {Job} from "../types/Job";
 
-import {useEffect, useState} from "react";
-
-type ProjectState = {
-    project: Project
-}
+import {useGlobalState} from "../providers/GlobalStateProvider";
 
 const ProjectPage = () => {
 
+    const [state, dispatch] = useGlobalState();
 
-    let initialState: ProjectState = {
-        project: null
-    };
-    const [state, setState] = useState<ProjectState>(initialState);
-    let {projectId} = useParams()
-
-
-    useEffect(() => {
-        fetch(`/api/v1/projects/${projectId}/`)
-            .then(res => res.json())
-            .then(res => setState({
-                project: res
-            }))
-    }, [])
-
+    if ( !state.project ) {
+        return null;
+    }
 
     return (
         <>
@@ -43,7 +27,7 @@ const ProjectPage = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {state.project != null ? state.project.jobs.map((job: Job) =>
+                        {state.project.jobs.map((job: Job) =>
                             <TableRow key={job.id}>
                                 <TableCell>{job.id}</TableCell>
                                 <TableCell>
@@ -54,7 +38,7 @@ const ProjectPage = () => {
                                 <TableCell>{job.service_name}</TableCell>
                                 <TableCell>{job.created_at}</TableCell>
                             </TableRow>
-                        ) : <></>}
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

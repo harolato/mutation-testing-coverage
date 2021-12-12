@@ -92,9 +92,9 @@ const ProjectsPage = () => {
                         </List>
                     </Grid>
                 </Grid>
-                <Fab onClick={addNewProjectOpen} color="primary" aria-label="add">
-                    <Add/>
-                </Fab>
+                {/*<Fab onClick={addNewProjectOpen} color="primary" aria-label="add">*/}
+                {/*    <Add/>*/}
+                {/*</Fab>*/}
             </Box>
             <Modal
                 open={open}

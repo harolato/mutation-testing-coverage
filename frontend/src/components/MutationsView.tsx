@@ -9,7 +9,7 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TableRow
+    TableRow, Typography
 } from "@mui/material";
 import {FileOpen} from "@mui/icons-material";
 import {useEffect, useState} from "react";
@@ -38,6 +38,10 @@ const MutationsView = (props:MutViewProps) => {
         });
     }
 
+    // if (props.selected.length == 0 && props.mutants.length == 0) {
+    //     return (<Typography>No mutants found on this file.</Typography>);
+    // }
+
     return (
         <div className={"mutation-view"}>
             {props.selected.length > 0 ? (<>
@@ -64,7 +68,6 @@ const MutationsView = (props:MutViewProps) => {
                                     className={"mutation-view"}
                                 >
                                     <TableCell>{MutantStatusType[mutation.status]}</TableCell>
-                                    <TableCell>{mutation.id}</TableCell>
                                     <TableCell>{mutation.description}</TableCell>
                                     <TableCell>{MutationResult[mutation.result]}</TableCell>
                                     <TableCell>{mutation.mutated_source_code}</TableCell>

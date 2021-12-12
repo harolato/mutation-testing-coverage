@@ -70,7 +70,6 @@ const MutantPage = () => {
     }
 
     const handleUpdateMutantStatus = (status_id: number, mutant: Mutation) => {
-
         dispatch({
             ...state,
             file: {
@@ -108,6 +107,7 @@ const MutantPage = () => {
                 mutant={fixMutant}
                 project={state.project}
             />
+            <MutantCoverageComponent mutant={state.mutant}/>
             <Grid container columns={12} justifyContent={"space-between"}>
                 <Grid item xs={3}>
                     <ReactionComponent
@@ -123,7 +123,7 @@ const MutantPage = () => {
                 {/*    </ButtonGroup>*/}
                 {/*</Grid>*/}
             </Grid>
-            <MutantCoverageComponent mutant={state.mutant}/>
+
         </>);
 }
 
