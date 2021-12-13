@@ -59,7 +59,7 @@ const FilePage = () => {
     useEffect(() => {
         if (state.file) {
             let filtered_mutants = filterMutants(state.file.mutations);
-            let found_mutant: Mutation = first(filtered_mutants.filter(mutant => mutant.id == mutantId));
+            let found_mutant: Mutation = first(state.file.mutations.filter((mutant:Mutation) => mutant.id == mutantId));
             dispatch((prevState: GlobalStateType) => {
                 return {
                     ...prevState,
@@ -75,7 +75,7 @@ const FilePage = () => {
                     navigate(`/projects/${projectId}/jobs/${jobId}/files/${fileId}/`);
                 }
             }
-            if (!mutantId || !state.mutant) {
+            if (!mutantId) {
                 redirectToFirstMutant(filtered_mutants);
             }
         }
