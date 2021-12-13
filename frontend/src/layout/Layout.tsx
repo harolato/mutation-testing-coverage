@@ -12,7 +12,9 @@ const Layout = () => {
     const [state, dispatch] = useGlobalState()
     const changeShowMutants = () => {
         dispatch({
+            ...state,
             layout: {
+                ...state.layout,
                 show_killed_mutants: !state.layout.show_killed_mutants
             }
         });

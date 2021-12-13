@@ -13,11 +13,15 @@ const NotificationToast = () => {
         dispatch({
             ...state,
             notification_toast: {
-                show: false,
+                open: false,
                 message: '',
                 type: 'success'
             }
         });
+    }
+
+    if ( !state.notification_toast ) {
+        return null;
     }
 
     return (
