@@ -1,7 +1,6 @@
 import {Box, Button, ButtonGroup, Grid, Link, Paper, styled, Typography} from "@mui/material";
 import React from "react";
 import {Mutation} from "../types/Mutation";
-import {useParams} from "react-router-dom";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 
 type MutantCoverageComponentPropsType = {

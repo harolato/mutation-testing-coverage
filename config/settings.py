@@ -34,6 +34,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
+DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,9 +48,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Libs
+    'channels',
     'rest_framework',
 
     # Internal apps
+    'notifications.apps.NotificationsConfig',
+    'testamp.apps.TestampConfig',
     'job.apps.JobConfig',
     'api.apps.ApiConfig',
     'homepage.apps.HomepageConfig',
@@ -94,12 +99,16 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {'default': dj_database_url.config(conn_max_age=500)}
+DATABASES = {
+    'default': dj_database_url.config(conn_max_age=500, default='pgsql://postgres:pass@127.0.0.1:5432/mutation')
+}
 
 # DATABASES = {
 #     'default': {
@@ -153,6 +162,18 @@ APPEND_SLASH = True
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
+
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IGNORE_RESULT = True
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 sentry_sdk.init(
     dsn="https://4872241223db4f478ecb22adefba0bf4@o1081601.ingest.sentry.io/6089203",

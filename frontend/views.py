@@ -1,9 +1,9 @@
-import json
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import render
-from github import Github
+
+from testamp.models import TestSuite
 
 
 class UserLogin(LoginView):

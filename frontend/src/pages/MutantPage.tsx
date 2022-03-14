@@ -9,6 +9,7 @@ import GHCommentIssueComponent from "../components/GHCommentIssueComponent";
 import {MutantStatusType, Mutation} from "../types/Mutation";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import MutantCoverageComponent from "../components/MutantCoverageComponent";
+import AmplifiedMethodsComponent from "../components/AmplifiedMethodsComponent";
 
 const MutantPage = () => {
     const [state, dispatch] = useGlobalState();
@@ -108,6 +109,7 @@ const MutantPage = () => {
                 project={state.project}
             />
             <MutantCoverageComponent mutant={state.mutant}/>
+            <AmplifiedMethodsComponent mutant={state.mutant}/>
             <Grid container columns={12} justifyContent={"space-between"}>
                 <Grid item xs={3}>
                     <ReactionComponent

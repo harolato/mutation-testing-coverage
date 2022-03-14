@@ -1,8 +1,12 @@
 # Create your views here.
+import json
 from difflib import context_diff, unified_diff
+from json import JSONDecodeError
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from github import Github
 from github.GithubException import BadCredentialsException
 
@@ -16,7 +20,8 @@ from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, BasicFileSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
     UserSerializer, ProfileSerializer, ProfileUpdateSerializer
-from job.models import Job, File, Mutation, Project, Profile
+from job.models import Job, File, Mutation, Project, Profile, MutantCoverage
+from testamp.models import TestSuite, TestCase, TestAmpZipFile
 
 
 class JobViewSet(viewsets.ModelViewSet):
@@ -241,3 +246,75 @@ class SubmitGHIssueViewSet(APIView):
                 data={'issue_url': gh_issue.html_url, 'issue_id': gh_issue.number},
                 status=200)
         return Response(data={'error': errors}, status=400)
+
+
+def json_response_exception():
+    def decorate(func):
+        def applicator(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                return JsonResponse(data={
+                    "status": False,
+                    "error": str(e)
+                }, status=400)
+        return applicator
+    return decorate
+
+
+class SubmitTestAmpView(APIView):
+    authentication_classes = (SessionAuthentication, SimpleTokenAuth)
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
+
+    @json_response_exception()
+    def post(self, request: HttpRequest, *args, **kwargs):
+        if not request.POST.get('json') or not request.FILES.get('file'):
+            raise Exception('Missing Field')
+
+        user: User = self.request.user
+
+        token = request.auth
+        project: Project = token.project
+
+        amplified_test_suites = json.loads(request.POST.get('json'))
+
+        if user.id is None:
+            raise Exception('User not found')
+        job = project.project_jobs.latest('created_at')
+
+        if request.GET.get('job_id'):
+            job = project.project_jobs.get(request.GET.get('job_id'))
+
+        file: InMemoryUploadedFile = request.FILES.get('file')
+
+        if file.content_type != 'application/zip':
+            raise Exception('Invalid attached file type. Accepted only zip')
+
+        zip_file = TestAmpZipFile.objects.create(
+            job=job,
+            file=file
+        )
+
+        for amplified_test_suite in amplified_test_suites:
+            test_suite: TestSuite = TestSuite.objects.create(
+                job=job,
+                name=amplified_test_suite['name'],
+                test_amp_zip_file=zip_file
+            )
+            for test_case in amplified_test_suite['amplified_tests']:
+                test_case_object = TestCase.objects.create(
+                    test_suite=test_suite,
+                    test_name=test_case['test_name'],
+                    test_reference_name=test_case['test_reference_name'],
+                    file_path=test_case['file_path'],
+                    start_line=test_case['start_line'],
+                    end_line=test_case['end_line'],
+                    new_coverage=test_case['new_coverage'],
+                    original_test=test_case['original_test'],
+                )
+                test_suite.testcase_set.add(test_case_object)
+
+        return JsonResponse(data={
+                'status': True
+            }, status=200)

@@ -47,6 +47,17 @@ const LoadDataComponent = () => {
 
     }, [fileId, projectId, jobId]);
 
+    useEffect(() => {
+        let ws_protocol = 'ws';
+        if ( window.location.protocol === 'https:' ) {
+            ws_protocol = 'wss'
+        }
+        const socket = new WebSocket(`${ws_protocol}://${window.location.host}/ws/notifications/`);
+        socket.onmessage = (event) => {
+            console.log(event);
+        }
+    }, []);
+
     return (<></>);
 }
 export default LoadDataComponent

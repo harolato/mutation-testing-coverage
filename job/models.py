@@ -25,12 +25,36 @@ def get_file_source_language(url):
     return data[0]
 
 
+def get_github_source_code(owner, repo, commit_hash, token, source_path):
+    """
+    Fetch source code from github
+    """
+    url = f"https://raw.githubusercontent.com/{owner}/{repo}/{commit_hash}/{source_path}"
+    response = requests.get(url, headers={'Authorization': f"token {token}"})
+    if response.status_code == 200:
+        source_code = response.content.decode("utf-8")
+        return {
+            "source": source_code,
+            "total_lines": source_code.count("\n"),
+            "file_type": get_file_source_language(url),
+        }
+    return {
+        "source": "",
+        "total_lines": 0,
+        "file_type": get_file_source_language(url),
+    }
+
+
 class Project(Timestampable):
     name = models.CharField(max_length=255, blank=True)
     description = models.CharField(max_length=255, blank=True)
     git_repo_owner = models.CharField(max_length=255, blank=True)
     git_repo_name = models.CharField(max_length=255, blank=True)
     users = models.ManyToManyField(User, related_name='project_users', through='ProjectMembership')
+
+    @property
+    def owner(self):
+        return self.get_owner()
 
     def get_owner(self):
         return self.users.filter(projectmembership__role='O').first()
@@ -57,13 +81,14 @@ class ProjectMembership(Timestampable):
 class Token(Timestampable):
     name = models.CharField(max_length=255)
     token = models.TextField(blank=True)
-    expire_at = models.DateTimeField(default=timezone.now() + timedelta(days=60))
+    expire_at = models.DateTimeField()
 
     project = models.ForeignKey(Project, unique=False, related_name='project_tokens', on_delete=models.CASCADE)
     user = models.ForeignKey(User, unique=False, related_name='user_tokens', on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
         if not self.pk:
+            self.expire_at = timezone.now() + timedelta(days=60)
             key_string = bytes(datetime.now().strftime("%c") + str(self.user.id) + str(self.project.id),
                                encoding='utf8')
             self.token = hashlib.sha256(base64.standard_b64encode(key_string)).hexdigest()
@@ -97,26 +122,13 @@ class File(Timestampable):
 
     @property
     def get_source_code(self):
-        """
-        Fetch source code from github
-        """
         job = self.job
         project = job.project
-        url = f"https://raw.githubusercontent.com/{project.git_repo_owner}/{project.git_repo_name}/{job.git_commit_sha}/{self.path}"
-
-        response = requests.get(url)
-        if response.status_code == 200:
-            source_code = response.content.decode("utf-8")
-            return {
-                "source": source_code,
-                "total_lines": source_code.count("\n"),
-                "file_type": get_file_source_language(url),
-            }
-        return {
-            "source": "",
-            "total_lines": 0,
-            "file_type": get_file_source_language(url),
-        }
+        return get_github_source_code(project.git_repo_owner,
+                                      project.git_repo_name,
+                                      job.git_commit_sha,
+                                      project.owner.user_profile.access_token,
+                                      self.path)
 
     class Meta:
         db_table = 'file'
@@ -211,6 +223,14 @@ class MutantCoverage(Timestampable):
     ])
 
     mutant = models.ForeignKey(Mutation, related_name='mutant_coverage', on_delete=models.CASCADE)
+
+    @property
+    def source_code(self):
+        return get_github_source_code(self.mutant.file.job.project.git_repo_owner,
+                                      self.mutant.file.job.project.git_repo_name,
+                                      self.mutant.file.job.git_commit_sha,
+                                      self.mutant.file.job.project.owner.user_profile.access_token,
+                                      self.file)
 
     class Meta:
         db_table = 'mutant_coverage'
