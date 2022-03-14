@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # Internal apps
-    'notifications.apps.NotificationsConfig',
+    # 'notifications.apps.NotificationsConfig',
     'testamp.apps.TestampConfig',
     'job.apps.JobConfig',
     'api.apps.ApiConfig',
