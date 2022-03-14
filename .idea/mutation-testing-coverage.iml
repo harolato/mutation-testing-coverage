@@ -6,7 +6,7 @@
         <option name="rootFolder" value="$MODULE_DIR$" />
         <option name="settingsModule" value="config/settings.py" />
         <option name="manageScript" value="manage.py" />
-        <option name="environment" value="&lt;map&gt;&#10;  &lt;entry&gt;&#10;    &lt;string&gt;DATABASE_URL&lt;/string&gt;&#10;    &lt;string&gt;pgsql://postgres:pass@localhost:5432/mutation&lt;/string&gt;&#10;  &lt;/entry&gt;&#10;&lt;/map&gt;" />
+        <option name="environment" value="&lt;map&gt;&#10;  &lt;entry&gt;&#10;    &lt;string&gt;DATABASE_URL&lt;/string&gt;&#10;    &lt;string&gt;pgsql://postgres:pass@localhost:5432/mutation&lt;/string&gt;&#10;  &lt;/entry&gt;&#10;  &lt;entry&gt;&#10;    &lt;string&gt;AWS_ACCESS_KEY_ID&lt;/string&gt;&#10;    &lt;string&gt;AKIAYHFBIQMAN6A35X7O&lt;/string&gt;&#10;  &lt;/entry&gt;&#10;  &lt;entry&gt;&#10;    &lt;string&gt;REDIS_URL&lt;/string&gt;&#10;    &lt;string&gt;redis://127.0.0.1:6379&lt;/string&gt;&#10;  &lt;/entry&gt;&#10;  &lt;entry&gt;&#10;    &lt;string&gt;AWS_SECRET_ACCESS_KEY&lt;/string&gt;&#10;    &lt;string&gt;BsXDHwsz7RAbX71xx2nmS8Dlonh0d+ona45I8izo&lt;/string&gt;&#10;  &lt;/entry&gt;&#10;&lt;/map&gt;" />
         <option name="doNotUseTestRunner" value="false" />
         <option name="trackFilePattern" value="" />
       </configuration>
