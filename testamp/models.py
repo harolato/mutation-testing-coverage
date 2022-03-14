@@ -1,12 +1,18 @@
+import uuid
+
 from django.db import models
 
 from config.utils import Timestampable
 from job.models import Job
 
 
+def zip_file_path(_, __):
+    return 'testamp_zipfiles/{}.zip'.format(uuid.uuid4())
+
+
 class TestAmpZipFile(Timestampable):
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    file = models.FileField(upload_to='testamp_zipfiles/')
+    file = models.FileField(upload_to=zip_file_path)
 
 
 class TestSuite(Timestampable):
