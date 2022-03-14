@@ -1,5 +1,6 @@
 # Create your views here.
 import json
+import logging
 from difflib import context_diff, unified_diff
 from json import JSONDecodeError
 
@@ -253,13 +254,18 @@ def json_response_exception():
         def applicator(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except AppException as e:
                 return JsonResponse(data={
                     "status": False,
                     "error": str(e)
                 }, status=400)
+
         return applicator
+
     return decorate
+
+class AppException(Exception):
+    pass
 
 
 class SubmitTestAmpView(APIView):
@@ -270,17 +276,21 @@ class SubmitTestAmpView(APIView):
     @json_response_exception()
     def post(self, request: HttpRequest, *args, **kwargs):
         if not request.POST.get('json') or not request.FILES.get('file'):
-            raise Exception('Missing Field')
+            raise AppException('Missing Field')
 
         user: User = self.request.user
 
         token = request.auth
         project: Project = token.project
 
-        amplified_test_suites = json.loads(request.POST.get('json'))
+        try:
+            amplified_test_suites = json.loads(request.POST.get('json'))
+        except JSONDecodeError:
+            raise AppException('Invalid JSON')
 
         if user.id is None:
-            raise Exception('User not found')
+            raise AppException('User not found')
+
         job = project.project_jobs.latest('created_at')
 
         if request.GET.get('job_id'):
@@ -289,7 +299,7 @@ class SubmitTestAmpView(APIView):
         file: InMemoryUploadedFile = request.FILES.get('file')
 
         if file.content_type != 'application/zip':
-            raise Exception('Invalid attached file type. Accepted only zip')
+            raise AppException('Invalid attached file type. Accepted only zip')
 
         zip_file = TestAmpZipFile.objects.create(
             job=job,
@@ -316,5 +326,5 @@ class SubmitTestAmpView(APIView):
                 test_suite.testcase_set.add(test_case_object)
 
         return JsonResponse(data={
-                'status': True
-            }, status=200)
+            'status': True
+        }, status=200)

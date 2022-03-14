@@ -13,11 +13,8 @@ class SimpleTokenAuth(rest_framework.authentication.BaseAuthentication):
         try:
             token = request.META['HTTP_X_API_KEY']
             token_object = Token.objects.filter(Q(expire_at__gt=datetime.datetime.now())).get(token=token)
-        except Token.DoesNotExist:
+        except (Token.DoesNotExist, KeyError):
             raise exceptions.AuthenticationFailed('Invalid Token')
-        except KeyError:
-            raise exceptions.AuthenticationFailed('Invalid Token')
-
         return token_object.user, token_object
 
 
