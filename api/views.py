@@ -307,6 +307,13 @@ class SubmitTestAmpView(APIView):
             file=file
         )
 
+        json_data = ContentFile(content=request.POST.get('json'))
+
+        TestAmpZipFile.objects.create(
+            job=job,
+            file=json_data
+        )
+
         amplified_test_clases = json_data['amplified_classes']
 
         for amplified_test_suite in amplified_test_clases:
