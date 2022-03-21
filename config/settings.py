@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+from distutils.util import strtobool
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,7 +31,7 @@ STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, './storage', 'static'))
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+#rt+)o%jp6010p(nn!bya$8qyhcor-7wbhs7^2%zu!&rliav0')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', True)
+DEBUG = strtobool(os.environ.get('DEBUG', 'true'))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
