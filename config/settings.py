@@ -36,7 +36,7 @@ DEBUG = strtobool(os.environ.get('DEBUG', 'true'))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
-if DEBUG is not True:
+if not DEBUG:
     DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
 
 # Application definition

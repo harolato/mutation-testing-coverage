@@ -1,9 +1,11 @@
 # Create your views here.
 import json
 import logging
+import tempfile
 from difflib import context_diff, unified_diff
 from json import JSONDecodeError
 
+import django.core.files
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
@@ -307,11 +309,11 @@ class SubmitTestAmpView(APIView):
             file=file
         )
 
-        json_data = ContentFile(content=request.POST.get('json'))
+        json_data_file = ContentFile(request.POST.get('json').encode("utf-8"), name="input.json")
 
         TestAmpZipFile.objects.create(
             job=job,
-            file=json_data
+            file=json_data_file
         )
 
         amplified_test_clases = json_data['amplified_classes']

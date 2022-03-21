@@ -78,17 +78,20 @@ class ProjectMembership(Timestampable):
         db_table = 'project_user'
 
 
+def token_expiration():
+    return timezone.now() + timezone.timedelta(days=60)
+
+
 class Token(Timestampable):
     name = models.CharField(max_length=255)
     token = models.TextField(blank=True)
-    expire_at = models.DateTimeField()
+    expire_at = models.DateTimeField(default=token_expiration)
 
     project = models.ForeignKey(Project, unique=False, related_name='project_tokens', on_delete=models.CASCADE)
     user = models.ForeignKey(User, unique=False, related_name='user_tokens', on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.expire_at = timezone.now() + timedelta(days=60)
             key_string = bytes(datetime.now().strftime("%c") + str(self.user.id) + str(self.project.id),
                                encoding='utf8')
             self.token = hashlib.sha256(base64.standard_b64encode(key_string)).hexdigest()

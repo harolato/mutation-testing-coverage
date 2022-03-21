@@ -6,8 +6,12 @@ from config.utils import Timestampable
 from job.models import Job
 
 
-def zip_file_path(_, __):
-    return 'testamp_zipfiles/{}.zip'.format(uuid.uuid4())
+def zip_file_path(_, file_name: str):
+    tmp_file_name_uuid = uuid.uuid4()
+    tmp_file_name = f"{tmp_file_name_uuid}.zip"
+    if file_name.find('.json') > -1:
+        tmp_file_name = f"{tmp_file_name_uuid}.json"
+    return f"testamp_zipfiles/{tmp_file_name}"
 
 
 class TestAmpZipFile(Timestampable):
