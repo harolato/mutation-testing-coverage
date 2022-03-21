@@ -6,6 +6,7 @@ from json import JSONDecodeError
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from github import Github
@@ -284,7 +285,7 @@ class SubmitTestAmpView(APIView):
         project: Project = token.project
 
         try:
-            amplified_test_suites = json.loads(request.POST.get('json'))
+            json_data = json.loads(request.POST.get('json'))
         except JSONDecodeError:
             raise AppException('Invalid JSON')
 
@@ -306,20 +307,23 @@ class SubmitTestAmpView(APIView):
             file=file
         )
 
-        for amplified_test_suite in amplified_test_suites:
+        amplified_test_clases = json_data['amplified_classes']
+
+        for amplified_test_suite in amplified_test_clases:
             test_suite: TestSuite = TestSuite.objects.create(
                 job=job,
                 name=amplified_test_suite['name'],
+                path=amplified_test_suite['amplified_class_address'],
                 test_amp_zip_file=zip_file
             )
             for test_case in amplified_test_suite['amplified_tests']:
                 test_case_object = TestCase.objects.create(
                     test_suite=test_suite,
-                    test_name=test_case['test_name'],
-                    test_reference_name=test_case['test_reference_name'],
-                    file_path=test_case['file_path'],
-                    start_line=test_case['start_line'],
-                    end_line=test_case['end_line'],
+                    test_name=test_case['testname'],
+                    test_reference_name=test_case['test_fullname'],
+                    file_path=test_case['filename'],
+                    start_line=test_case['fromline'],
+                    end_line=test_case['toline'],
                     new_coverage=test_case['new_coverage'],
                     original_test=test_case['original_test'],
                 )

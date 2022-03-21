@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import HttpRequest
 from django.shortcuts import render
 
 from testamp.models import TestSuite
@@ -22,3 +23,7 @@ def file_view(request):
 
 class UserLogout(LogoutView):
     pass
+
+
+def error_view(request: HttpRequest):
+    division_by_zero = 1 / 0

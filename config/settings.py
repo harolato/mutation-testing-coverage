@@ -20,21 +20,23 @@ from sentry_sdk.integrations.django import DjangoIntegration
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..', 'media'))
-STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..', 'static'))
+MEDIA_ROOT = os.path.abspath(os.path.join(BASE_DIR, './storage', 'media'))
+STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, './storage', 'static'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+#rt+)o%jp6010p(nn!bya$8qyhcor-7wbhs7^2%zu!&rliav0'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-+#rt+)o%jp6010p(nn!bya$8qyhcor-7wbhs7^2%zu!&rliav0')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', True)
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
-DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
+if DEBUG is not True:
+    DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
+
 
 # Application definition
 
@@ -48,7 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Libs
-    'channels',
+    # 'channels',
     'rest_framework',
 
     # Internal apps
@@ -101,7 +103,7 @@ TEMPLATES = [
 
 
 WSGI_APPLICATION = 'config.wsgi.application'
-ASGI_APPLICATION = 'config.asgi.application'
+# ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -166,23 +168,27 @@ LOGIN_URL = 'login'
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_IGNORE_RESULT = True
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("127.0.0.1", 6379)],
+#         },
+#     },
+# }
+
+
 
 sentry_sdk.init(
     dsn="https://4872241223db4f478ecb22adefba0bf4@o1081601.ingest.sentry.io/6089203",
     integrations=[DjangoIntegration()],
 
+    environment=os.environ.get('SENTRY_ENV', "development"),
+
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
-    traces_sample_rate=0,
+    traces_sample_rate=os.environ.get('SENTRY_TSR', 0),
 
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
