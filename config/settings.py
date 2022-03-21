@@ -17,6 +17,7 @@ from pathlib import Path
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_URL = 'static/'
@@ -37,7 +38,6 @@ ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
 if DEBUG is not True:
     DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
-
 
 # Application definition
 
@@ -101,7 +101,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 WSGI_APPLICATION = 'config.wsgi.application'
 # ASGI_APPLICATION = 'config.asgi.application'
@@ -179,10 +178,12 @@ LOGIN_URL = 'login'
 # }
 
 
-
 sentry_sdk.init(
     dsn="https://4872241223db4f478ecb22adefba0bf4@o1081601.ingest.sentry.io/6089203",
-    integrations=[DjangoIntegration()],
+    integrations=[
+        DjangoIntegration(),
+        RedisIntegration(),
+    ],
 
     environment=os.environ.get('SENTRY_ENV', "development"),
 
