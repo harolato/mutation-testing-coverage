@@ -5,7 +5,7 @@ from testamp.models import TestAmpZipFile
 
 
 class ZipFileAdmin(admin.ModelAdmin):
-    list_display = ('job', 'file')
+    list_display = ('file',)
 
 
 admin.site.register(TestAmpZipFile, ZipFileAdmin)

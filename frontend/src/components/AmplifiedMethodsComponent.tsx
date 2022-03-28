@@ -44,15 +44,15 @@ const AmplifiedMethodsComponent = (props: AmplifiedMethodsComponentPropsType) =>
                                 <Button
                                     color={(covered.level >= 1 ? "success" : "primary")}
                                     disableElevation disableFocusRipple disableTouchRipple
-                                ></Button>
+                                />
                                 <Button
                                     color={(covered.level >= 2 ? "success" : "primary")}
                                     disableElevation disableFocusRipple disableTouchRipple
-                                ></Button>
+                                />
                                 <Button
                                     color={(covered.level >= 3 ? "success" : "primary")}
                                     disableElevation disableFocusRipple disableTouchRipple
-                                ></Button>
+                                />
                             </ButtonGroup>
                         </Item>
                     </Grid>

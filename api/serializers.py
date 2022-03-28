@@ -2,12 +2,34 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import serializers
 from job.models import Job, File, Mutation, Project, Profile, ProjectMembership, MutantCoverage
+from testamp.models import TestCase, TestSuite
+
+
+class AmpTestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestCase
+        exclude = ()
 
 
 class MutantCoverageSerializer(serializers.ModelSerializer):
+    amplified_tests = serializers.SerializerMethodField()
+
     class Meta:
         model = MutantCoverage
         exclude = ()
+
+    def get_amplified_tests(self, cov: MutantCoverage):
+        job = cov.mutant.file.job
+        test_amp_run = job.testsuite_set.all()
+        tests_suites = test_amp_run.filter(testcase__original_test__filename=cov.file)
+
+        amp_tests = []
+
+        amp_test_suite: TestSuite
+        for amp_test_suite in tests_suites:
+            for amp_test in amp_test_suite.testcase_set.filter(original_test__filename=cov.file):
+                amp_tests.append(amp_test)
+        return AmpTestSerializer(amp_tests, many=True, read_only=True).data
 
 
 class MutationSerializer(serializers.ModelSerializer):

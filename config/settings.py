@@ -36,7 +36,9 @@ DEBUG = strtobool(os.environ.get('DEBUG', 'true'))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
-if not DEBUG:
+USE_S3 = strtobool(os.environ.get('USE_S3', 'true'))
+
+if not DEBUG or USE_S3:
     DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
 
 # Application definition
@@ -190,7 +192,7 @@ sentry_sdk.init(
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
-    traces_sample_rate=float(os.environ.get('SENTRY_TSR', 1.0)),
+    traces_sample_rate=float(os.environ.get('SENTRY_TSR', 0.0)),
 
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.

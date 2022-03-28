@@ -1,4 +1,5 @@
 import uuid
+import zipfile
 
 from django.db import models
 
@@ -15,7 +16,6 @@ def zip_file_path(_, file_name: str):
 
 
 class TestAmpZipFile(Timestampable):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
     file = models.FileField(upload_to=zip_file_path)
 
 
@@ -23,7 +23,7 @@ class TestSuite(Timestampable):
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     path = models.CharField(max_length=255)
-    test_amp_zip_file = models.ForeignKey(TestAmpZipFile, on_delete=models.CASCADE)
+    zip_file = models.OneToOneField(TestAmpZipFile, on_delete=models.CASCADE, default='', null=True)
 
 
 class TestCase(Timestampable):
@@ -40,3 +40,7 @@ class TestCase(Timestampable):
     )
     new_coverage = models.JSONField(default=list)
     original_test = models.JSONField(default=dict)
+
+    # def get_amplified_test_source(self):
+    #     with zipfile.ZipFile():
+    #         pass

@@ -1,30 +1,30 @@
 # Create your views here.
 import json
-import logging
-import tempfile
-from difflib import context_diff, unified_diff
+from difflib import unified_diff
 from json import JSONDecodeError
 
-import django.core.files
+from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import JsonResponse
 from github import Github
 from github.GithubException import BadCredentialsException
 
 from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.authentication import SimpleTokenAuth
-from api.serializers import JobSerializer, BasicFileSerializer, \
+from api.serializers import JobSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
     UserSerializer, ProfileSerializer, ProfileUpdateSerializer
-from job.models import Job, File, Mutation, Project, Profile, MutantCoverage
+from config.utils import json_response_exception, AppException
+from job.models import Job, File, Mutation, Project, Profile
 from testamp.models import TestSuite, TestCase, TestAmpZipFile
 
 
@@ -151,13 +151,12 @@ class SubmitGHIssueViewSet(APIView):
         try:
             mutant = Mutation.objects.get(pk=kwargs['mutant_id'])
         except ObjectDoesNotExist:
-            errors.append('Mutation not found')
+            raise AppException('Mutation not found')
 
         try:
             gh = Github(login_or_token=user.user_profile.access_token)
-            gh_login = gh.get_user().login
         except BadCredentialsException:
-            errors.append('Invalid Github Access Token')
+            raise AppException('Invalid Github Access Token')
 
         if len(errors) == 0:
             gh_repo = gh.get_repo(f"{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}")
@@ -175,15 +174,14 @@ class SubmitGHIssueViewSet(APIView):
             mutant_url = request.build_absolute_uri(
                 f"/projects/{mutant.file.job.project.id}/jobs/{mutant.file.job.id}/files/{mutant.file.id}/mutant/{mutant.id}/")
 
-            markdown = "\n"
-            markdown += "```...NOTES HERE...```"
-            markdown += "\n\n"
-            markdown += f"[Open Mutant in Visualiser tool]({mutant_url})\n\n"
-            markdown += "\n\n"
-            markdown += f"```{mutant.description}```"
-            markdown += "\n\n"
-            markdown += f"https://github.com/{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}/blob/{mutant.file.job.git_commit_sha}/{mutant.file.path}#L{mutant.start_line}"
-            markdown += "\n\n```diff\n" + "\n".join(diff_string) + "\n```"
+            github_link = f"https://github.com/{mutant.file.job.project.git_repo_owner}/{mutant.file.job.project.git_repo_name}/blob/{mutant.file.job.git_commit_sha}/{mutant.file.path}#L{mutant.start_line} "
+
+            markdown = render_to_string('api/github_issue.md', {
+                'github_link': github_link,
+                'mutant': mutant,
+                'mutant_url': mutant_url,
+                'diff': "\n".join(diff_string)
+            })
 
             issue_title = f"Resolve mutants on {mutant.file.job.git_commit_sha[0:7]}"
 
@@ -197,8 +195,9 @@ class SubmitGHIssueViewSet(APIView):
                 }
             return Response(
                 data={'markdown': markdown, 'issue_title': issue_title, 'labels': gh_labels, 'issue': gh_issue})
-        return Response(data={'errors': errors}, status=400)
+        raise AppException(message='Errors', exception_data=errors)
 
+    @json_response_exception()
     def post(self, request, *args, **kwargs):
         user: User = self.request.user
         errors = []
@@ -216,16 +215,15 @@ class SubmitGHIssueViewSet(APIView):
             gh = Github(login_or_token=user.user_profile.access_token)
             gh_login = gh.get_user().login
         except BadCredentialsException:
-            errors.append('Invalid Github Access Token')
+            raise AppException('Invalid Github Access Token')
 
         if user.id is None:
             errors.append('User not found')
-        if kwargs['mutant_id'] is None:
-            errors.append('Mutation ID missing')
+
         try:
             mutant = Mutation.objects.get(pk=kwargs['mutant_id'])
         except ObjectDoesNotExist:
-            errors.append('Mutation not found')
+            raise AppException('Mutation not found')
 
         if len(errors) == 0:
             assignee = None
@@ -244,31 +242,11 @@ class SubmitGHIssueViewSet(APIView):
                     job.github_issue_id = gh_issue.number
                     job.save()
             except AssertionError as error:
-                return Response(data={'error': 'Failed to create Issue. Try again later: ' + error.__str__()},
-                                status=400)
+                raise AppException(message='Failed to create Issue. Try again later: ' + error.__str__())
             return Response(
                 data={'issue_url': gh_issue.html_url, 'issue_id': gh_issue.number},
                 status=200)
-        return Response(data={'error': errors}, status=400)
-
-
-def json_response_exception():
-    def decorate(func):
-        def applicator(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except AppException as e:
-                return JsonResponse(data={
-                    "status": False,
-                    "error": str(e)
-                }, status=400)
-
-        return applicator
-
-    return decorate
-
-class AppException(Exception):
-    pass
+        raise AppException(message='Error', exception_data=errors)
 
 
 class SubmitTestAmpView(APIView):
@@ -277,7 +255,7 @@ class SubmitTestAmpView(APIView):
     http_method_names = ['post']
 
     @json_response_exception()
-    def post(self, request: HttpRequest, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs):
         if not request.POST.get('json') or not request.FILES.get('file'):
             raise AppException('Missing Field')
 
@@ -293,28 +271,16 @@ class SubmitTestAmpView(APIView):
 
         if user.id is None:
             raise AppException('User not found')
-
-        job = project.project_jobs.latest('created_at')
-
-        if request.GET.get('job_id'):
-            job = project.project_jobs.get(request.GET.get('job_id'))
+        try:
+            job = project.project_jobs.get(git_commit_sha=json_data['head_commit_id'])
+        except Job.DoesNotExist:
+            raise AppException('Commit hash not found. Make sure you upload mutations before uploading test '
+                               'amplification')
 
         file: InMemoryUploadedFile = request.FILES.get('file')
 
         if file.content_type != 'application/zip':
             raise AppException('Invalid attached file type. Accepted only zip')
-
-        zip_file = TestAmpZipFile.objects.create(
-            job=job,
-            file=file
-        )
-
-        json_data_file = ContentFile(request.POST.get('json').encode("utf-8"), name="input.json")
-
-        TestAmpZipFile.objects.create(
-            job=job,
-            file=json_data_file
-        )
 
         amplified_test_clases = json_data['amplified_classes']
 
@@ -323,8 +289,13 @@ class SubmitTestAmpView(APIView):
                 job=job,
                 name=amplified_test_suite['name'],
                 path=amplified_test_suite['amplified_class_address'],
-                test_amp_zip_file=zip_file
             )
+
+            TestAmpZipFile.objects.create(
+                test_suite=test_suite,
+                file=file
+            )
+
             for test_case in amplified_test_suite['amplified_tests']:
                 test_case_object = TestCase.objects.create(
                     test_suite=test_suite,
