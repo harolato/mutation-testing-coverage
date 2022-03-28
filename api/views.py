@@ -284,16 +284,16 @@ class SubmitTestAmpView(APIView):
 
         amplified_test_clases = json_data['amplified_classes']
 
+        zip_file = TestAmpZipFile.objects.create(
+            file=file
+        )
+
         for amplified_test_suite in amplified_test_clases:
             test_suite: TestSuite = TestSuite.objects.create(
                 job=job,
                 name=amplified_test_suite['name'],
                 path=amplified_test_suite['amplified_class_address'],
-            )
-
-            TestAmpZipFile.objects.create(
-                test_suite=test_suite,
-                file=file
+                zipfile=zip_file
             )
 
             for test_case in amplified_test_suite['amplified_tests']:

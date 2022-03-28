@@ -7,6 +7,7 @@ import JobPage from "../pages/JobPage";
 import FilePage from "../pages/FilePage";
 import MutantPage from "../pages/MutantPage";
 import HomePage from "../pages/HomePage";
+import TestAmpPage from "../pages/TestAmpPage";
 
 export default class PageRoutes extends React.Component<any, any> {
     render = () =>
@@ -16,6 +17,7 @@ export default class PageRoutes extends React.Component<any, any> {
                     <Route path={"/projects/"} element={<ProjectsPage/>}/>
                     <Route path={"/projects/:projectId/"} element={<ProjectPage/>}/>
                     <Route path={"/projects/:projectId/jobs/:jobId/"} element={<JobPage/>}/>
+                    <Route path={"/amplified-test/:mutantCoverageId"} element={<TestAmpPage/>}></Route>
                     <Route path={"/projects/:projectId/jobs/:jobId/files/:fileId/"} element={<FilePage/>}>
                         <Route path={"mutant/:mutantId/"} element={<MutantPage/>}/>
                     </Route>
@@ -31,4 +33,5 @@ export type RouteParams = {
     projectId: number | null,
     fileId: number | null,
     mutantId: number | null,
+    mutantCoverageId: number | null,
 }

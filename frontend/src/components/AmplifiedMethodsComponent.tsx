@@ -1,4 +1,4 @@
-import {Box, Button, ButtonGroup, Grid, Link, Paper, styled, Typography} from "@mui/material";
+import {Box, Button, ButtonGroup, Grid, Link, Paper, styled, Tooltip, Typography} from "@mui/material";
 import React from "react";
 import {Mutation} from "../types/Mutation";
 import {useGlobalState} from "../providers/GlobalStateProvider";
@@ -41,18 +41,24 @@ const AmplifiedMethodsComponent = (props: AmplifiedMethodsComponentPropsType) =>
                     <Grid item xs={3}>
                         <Item>
                             <ButtonGroup variant="contained" aria-label="outlined primary button group">
-                                <Button
-                                    color={(covered.level >= 1 ? "success" : "primary")}
-                                    disableElevation disableFocusRipple disableTouchRipple
-                                />
-                                <Button
-                                    color={(covered.level >= 2 ? "success" : "primary")}
-                                    disableElevation disableFocusRipple disableTouchRipple
-                                />
-                                <Button
-                                    color={(covered.level >= 3 ? "success" : "primary")}
-                                    disableElevation disableFocusRipple disableTouchRipple
-                                />
+                                <Tooltip title={"Reached"} placement={"top"}>
+                                    <Button
+                                        color={(covered.level >= 1 ? "success" : "error")}
+                                        disableElevation disableFocusRipple disableTouchRipple
+                                    ></Button>
+                                </Tooltip>
+                                <Tooltip title={"Infected"} placement={"top"}>
+                                    <Button
+                                        color={(covered.level >= 2 ? "success" : "error")}
+                                        disableElevation disableFocusRipple disableTouchRipple
+                                    ></Button>
+                                </Tooltip>
+                                <Tooltip title={"Revealed"} placement={"top"}>
+                                    <Button
+                                        color={(covered.level >= 3 ? "success" : "error")}
+                                        disableElevation disableFocusRipple disableTouchRipple
+                                    ></Button>
+                                </Tooltip>
                             </ButtonGroup>
                         </Item>
                     </Grid>

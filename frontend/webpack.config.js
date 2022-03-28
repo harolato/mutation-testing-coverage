@@ -1,6 +1,7 @@
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
 
 module.exports = {
     stats: "normal",
@@ -70,6 +71,11 @@ module.exports = {
         // },
     },
     plugins: [
+        new WebpackBuildNotifierPlugin({
+            title: "Mut test cov",
+            showDuration: true,
+            suppressSuccess: false, // don't spam success notifications
+        }),
         new MonacoWebpackPlugin({
             "languages": ['st'],
             filename: "[name].bundle.js",

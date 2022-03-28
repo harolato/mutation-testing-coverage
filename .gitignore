@@ -130,7 +130,7 @@ dmypy.json
 node_modules/
 .DS_Store
 
-.idea
+.idea/*
 /storage/media
 /storage/static
 /storage/live-data-dump-out.sql
