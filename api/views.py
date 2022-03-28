@@ -258,7 +258,7 @@ class SubmitTestAmpView(APIView):
     @json_response_exception()
     def post(self, request: Request, *args, **kwargs):
         if not request.POST.get('json') or not request.FILES.get('file'):
-            raise AppException('Missing Field')
+            raise AppException('Missing Field', exception_data=['json or file'])
 
         if os.environ.get("DEBUG_", '0') == '1':
             file: InMemoryUploadedFile = request.FILES.get('file')
@@ -271,6 +271,10 @@ class SubmitTestAmpView(APIView):
             TestAmpZipFile.objects.create(
                 file=json_data_file
             )
+            return JsonResponse(data={
+                'status': True,
+                'DEBUG': 'Logged'
+            }, status=200)
 
         user: User = self.request.user
 
@@ -306,7 +310,7 @@ class SubmitTestAmpView(APIView):
                 job=job,
                 name=amplified_test_suite['name'],
                 path=amplified_test_suite['amplified_class_address'],
-                zipfile=zip_file
+                zip_file=zip_file
             )
 
             for test_case in amplified_test_suite['amplified_tests']:
