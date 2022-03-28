@@ -1,5 +1,6 @@
 # Create your views here.
 import json
+import os
 from difflib import unified_diff
 from json import JSONDecodeError
 
@@ -258,6 +259,18 @@ class SubmitTestAmpView(APIView):
     def post(self, request: Request, *args, **kwargs):
         if not request.POST.get('json') or not request.FILES.get('file'):
             raise AppException('Missing Field')
+
+        if os.environ.get("DEBUG_", '0') == '1':
+            file: InMemoryUploadedFile = request.FILES.get('file')
+            TestAmpZipFile.objects.create(
+                file=file
+            )
+            from django.core.files.base import ContentFile
+            json_data_file = ContentFile(request.POST.get('json').encode("utf-8"), name="input.json")
+
+            TestAmpZipFile.objects.create(
+                file=json_data_file
+            )
 
         user: User = self.request.user
 

@@ -1,3 +1,4 @@
+import os
 import uuid
 import zipfile
 
@@ -9,6 +10,8 @@ from job.models import Job
 
 def zip_file_path(_, file_name: str):
     tmp_file_name_uuid = uuid.uuid4()
+    if os.environ.get("DEBUG_", '0') == '1':
+        tmp_file_name_uuid += '_debug'
     tmp_file_name = f"{tmp_file_name_uuid}.zip"
     if file_name.find('.json') > -1:
         tmp_file_name = f"{tmp_file_name_uuid}.json"
