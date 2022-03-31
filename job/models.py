@@ -1,48 +1,11 @@
 import base64
 import hashlib
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from config.utils import Timestampable
-import requests
-import json
-import re
-
-
-def get_file_source_language(url):
-    json_file = open(os.path.dirname(__file__) + '/../storage/monaco_languages.json')
-    data = json.load(json_file)
-    json_file.close()
-    extension = re.search(r"^.*(\..*)$", url)
-    if extension:
-        url_extension = extension.group(1)
-        for file_type in data:
-            for file_extension in file_type['extensions']:
-                if file_extension == url_extension:
-                    return file_type
-    return data[0]
-
-
-def get_github_source_code(owner, repo, commit_hash, token, source_path):
-    """
-    Fetch source code from github
-    """
-    url = f"https://raw.githubusercontent.com/{owner}/{repo}/{commit_hash}/{source_path}"
-    response = requests.get(url, headers={'Authorization': f"token {token}"})
-    if response.status_code == 200:
-        source_code = response.content.decode("utf-8")
-        return {
-            "source": source_code,
-            "total_lines": source_code.count("\n"),
-            "file_type": get_file_source_language(url),
-        }
-    return {
-        "source": "",
-        "total_lines": 0,
-        "file_type": get_file_source_language(url),
-    }
+from github_api.utils import get_github_source_code
 
 
 class Project(Timestampable):
@@ -161,7 +124,7 @@ class Mutation(Timestampable):
 
     file = models.ForeignKey('File', related_name='mutations', on_delete=models.CASCADE)
 
-    def get_mutated_source_code(self, source_code=None):
+    def get_mutated_source_code(self, source_code: str = None):
         if source_code is None:
             source_code = {}
         if "source" not in source_code:
@@ -171,7 +134,6 @@ class Mutation(Timestampable):
             split_source = source_code['source'].split('\n')
         try:
             tmp_src = source_code.copy()
-            tmp_src['changed'] = []
             start_line = self.start_line - 1  # starts counting from zero
             if self.end_line > self.start_line:
                 # Split source code string into array
@@ -200,6 +162,7 @@ class Mutation(Timestampable):
         except IndexError:
             return ""
         return tmp_src
+
 
     class Meta:
         db_table = 'mutation'

@@ -1,3 +1,5 @@
+import {AmplifiedTestCaseType} from "./AmplifiedTestCaseType";
+
 export enum MutantCoverageLevelType {
     "Method Covered" = 1,
     "Node Covered" = 2,
@@ -11,5 +13,6 @@ export type MutantCoverageType = {
     test_method_name: string;
     file: string;
     line?: number;
-    level: 1 | 2 | 3 | 4 | 5 | MutantCoverageLevelType
+    level: 1 | 2 | 3 | 4 | 5 | MutantCoverageLevelType,
+    amplified_tests: AmplifiedTestCaseType[]
 }

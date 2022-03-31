@@ -1,14 +1,41 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import serializers
+
+from config.utils import display_source_code
+from github_api.utils import get_github_source_code
 from job.models import Job, File, Mutation, Project, Profile, ProjectMembership, MutantCoverage
 from testamp.models import TestCase, TestSuite
 
 
 class AmpTestSerializer(serializers.ModelSerializer):
+    source_code = serializers.SerializerMethodField()
+    original_test = serializers.SerializerMethodField()
+
     class Meta:
         model = TestCase
         exclude = ()
+
+    def get_original_test(self, test_case: TestCase):
+        from api.views import TestAmpViewSet
+        if 'request' in self.context and 'view' in self.context and type(self.context['view']) is TestAmpViewSet:
+            job = test_case.test_suite.job
+            project = job.project
+            test_case.original_test['source_code'] = get_github_source_code(
+                project.git_repo_owner,
+                project.git_repo_name,
+                job.git_commit_sha,
+                project.owner.user_profile.access_token,
+                test_case.original_test['filename']
+            )
+        return test_case.original_test
+
+    def get_source_code(self, test_case: TestCase):
+        from api.views import TestAmpViewSet
+        if 'request' in self.context and 'view' in self.context and type(self.context['view']) is TestAmpViewSet:
+            return display_source_code(test_case.get_amplified_test_source(), test_case.file_path)
+        return None
+
 
 
 class MutantCoverageSerializer(serializers.ModelSerializer):
@@ -21,15 +48,21 @@ class MutantCoverageSerializer(serializers.ModelSerializer):
     def get_amplified_tests(self, cov: MutantCoverage):
         job = cov.mutant.file.job
         test_amp_run = job.testsuite_set.all()
-        tests_suites = test_amp_run.filter(testcase__original_test__filename=cov.file)
+        tests_suites = test_amp_run.filter(testcase__original_test__filename=cov.file,
+                                           testcase__original_test__testname=cov.test_method_name)
 
         amp_tests = []
 
         amp_test_suite: TestSuite
+        ids = []
         for amp_test_suite in tests_suites:
-            for amp_test in amp_test_suite.testcase_set.filter(original_test__filename=cov.file):
-                amp_tests.append(amp_test)
-        return AmpTestSerializer(amp_tests, many=True, read_only=True).data
+            for amp_test in amp_test_suite.testcase_set.filter(original_test__filename=cov.file,
+                                                               original_test__testname=cov.test_method_name):
+                if amp_test.pk not in ids:
+                    ids.append(amp_test.pk)
+                    amp_tests.append(amp_test)
+
+        return AmpTestSerializer(amp_tests, many=True, read_only=True, context=self.context).data
 
 
 class MutationSerializer(serializers.ModelSerializer):
@@ -63,7 +96,7 @@ class FileSerializer(serializers.ModelSerializer):
         self.source_code_str = obj.get_source_code
         if self.source_code_str:
             return self.source_code_str
-        return ""
+        return display_source_code(source_code='', file_path=obj.path)
 
     class Meta:
         model = File

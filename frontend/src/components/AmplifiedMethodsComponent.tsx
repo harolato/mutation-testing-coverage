@@ -1,7 +1,10 @@
-import {Box, Button, ButtonGroup, Grid, Link, Paper, styled, Tooltip, Typography} from "@mui/material";
+import {Box, Button, ButtonGroup, Grid, Paper, styled, Tooltip, Typography} from "@mui/material";
 import React from "react";
 import {Mutation} from "../types/Mutation";
 import {useGlobalState} from "../providers/GlobalStateProvider";
+import {Link} from "react-router-dom";
+import {AmplifiedTestCaseType} from "../types/AmplifiedTestCaseType";
+import {MutantCoverageType} from "../types/MutantCoverageType";
 
 type AmplifiedMethodsComponentPropsType = {
     mutant: Mutation
@@ -20,50 +23,61 @@ const AmplifiedMethodsComponent = (props: AmplifiedMethodsComponentPropsType) =>
         return (<Typography sx={{m: 3}}>Mutant Not covered by any test method</Typography>);
     }
 
-    return (<>
-        <Typography sx={{m: 3}}>Amplified Test Methods:</Typography>
-        <Box sx={{mb: 5}}>
-            {props.mutant.covered_by.map(covered => (
-                <Grid key={covered.id} container direction="row"
+    let renderTestList = (covered: MutantCoverageType[]) => {
+        let amplified_tests_array: AmplifiedTestCaseType[] = [];
+        let ids: number[] = [];
+        covered.forEach((cov:MutantCoverageType) => {
+            cov.amplified_tests.forEach((test:AmplifiedTestCaseType) => {
+               if ( ids.indexOf(test.id) === -1 ) {
+                   ids.push(test.id)
+                   amplified_tests_array.push(test)
+               }
+            });
+        })
+        return amplified_tests_array
+            .sort((testA:AmplifiedTestCaseType, testB:AmplifiedTestCaseType) => {
+                if (testA.test_reference_name > testB.test_reference_name) {
+                    return 1
+                } else if (testA.test_reference_name < testB.test_reference_name) {
+                    return -1
+                }
+                return 0
+            })
+            .map((amplified_test: AmplifiedTestCaseType) => (
+            <>
+                <Grid key={amplified_test.id} container direction="row"
                       justifyContent="flex-start"
                       alignItems="flex-start"
                       sx={{mb: 1}}
                 >
-                    <Grid item xs={3}>
+                    <Grid item>
                         <Item>
                             <Link
-                                target={"_blank"}
-                                href={`https://github.com/${state.project.git_repo_owner}/${state.project.git_repo_name}/tree/${state.job.git_commit_sha}/${covered.file}#L${covered.line}`}>
-                                {covered.test_method_name}
+                                to={`/amplified-test/${amplified_test.id}`}>
+                                {amplified_test.test_reference_name}
                             </Link>
                         </Item>
                     </Grid>
-                    <Grid item xs={3}>
+                    <Grid item>
                         <Item>
-                            <ButtonGroup variant="contained" aria-label="outlined primary button group">
-                                <Tooltip title={"Reached"} placement={"top"}>
-                                    <Button
-                                        color={(covered.level >= 1 ? "success" : "error")}
-                                        disableElevation disableFocusRipple disableTouchRipple
-                                    ></Button>
-                                </Tooltip>
-                                <Tooltip title={"Infected"} placement={"top"}>
-                                    <Button
-                                        color={(covered.level >= 2 ? "success" : "error")}
-                                        disableElevation disableFocusRipple disableTouchRipple
-                                    ></Button>
-                                </Tooltip>
-                                <Tooltip title={"Revealed"} placement={"top"}>
-                                    <Button
-                                        color={(covered.level >= 3 ? "success" : "error")}
-                                        disableElevation disableFocusRipple disableTouchRipple
-                                    ></Button>
-                                </Tooltip>
-                            </ButtonGroup>
+                            <Typography>{amplified_test.original_test.testname}</Typography>
+                        </Item>
+                    </Grid>
+                    <Grid item>
+                        <Item>
+                            <Typography>Killed mutants: {amplified_test.new_coverage.length}</Typography>
                         </Item>
                     </Grid>
                 </Grid>
-            ))}
+            </>
+        ))
+    }
+
+
+    return (<>
+        <Typography sx={{m: 3}}>Amplified Test Methods:</Typography>
+        <Box sx={{mb: 5}}>
+            {renderTestList(props.mutant.covered_by)}
         </Box>
     </>);
 }

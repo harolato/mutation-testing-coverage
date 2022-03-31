@@ -4,7 +4,6 @@ import os
 from difflib import unified_diff
 from json import JSONDecodeError
 
-from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -23,9 +22,9 @@ from rest_framework.views import APIView
 from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
-    UserSerializer, ProfileSerializer, ProfileUpdateSerializer
+    UserSerializer, ProfileSerializer, ProfileUpdateSerializer, MutantCoverageSerializer, AmpTestSerializer
 from config.utils import json_response_exception, AppException
-from job.models import Job, File, Mutation, Project, Profile
+from job.models import Job, File, Mutation, Project, Profile, MutantCoverage
 from testamp.models import TestSuite, TestCase, TestAmpZipFile
 
 
@@ -329,3 +328,15 @@ class SubmitTestAmpView(APIView):
         return JsonResponse(data={
             'status': True
         }, status=200)
+
+
+class TestAmpViewSet(viewsets.ModelViewSet):
+    authentication_classes = (SessionAuthentication, SimpleTokenAuth)
+    http_method_names = ['get']
+    queryset = TestCase.objects.all()
+    serializer_class = AmpTestSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context

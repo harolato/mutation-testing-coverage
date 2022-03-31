@@ -1,32 +1,36 @@
 import React, {useEffect, useState} from "react";
 import {useGlobalState} from "../providers/GlobalStateProvider";
 import {Grid} from "@mui/material";
-import CodeEditor from "../components/CodeEditor";
 import {useParams} from "react-router-dom";
-
+import BasicCodeEditor from "../components/BasicCodeEditor";
+import {useLoading} from "../providers/LoadingStateProvider";
 
 const TestAmpPage = () => {
     const [state, dispatch] = useGlobalState();
-    const [mutantCoverage, setMutantCoverage] = useState();
-    let {mutantCoverageId} = useParams();
+    const {loading, setLoading} = useLoading();
+    const [amplifiedTest, setamplifiedTest] = useState(null);
+    let {amplifiedTestId} = useParams();
 
     useEffect(() => {
-        fetch(`/api/v1/projects/${mutantCoverageId}/`)
-    }, [mutantCoverageId])
+        fetch(`/api/v1/test_amp/${amplifiedTestId}/`)
+            .then(response => response.json())
+            .then((response_json) => {
+                setamplifiedTest(response_json)
+                setLoading(false)
+            });
+    }, [amplifiedTestId])
 
-    if (!state.project) {
-        return null;
-    }
+    if (!amplifiedTest) return null;
 
     return (
         <>
             <Grid container spacing={2}>
-                <CodeEditor
-                    file={null}
-                    onLineSelected={null}
-                    currently_viewing_mutant={null}
-                    mutants={null}
-                />
+                <Grid item xs={6}>
+                    <BasicCodeEditor source_code={amplifiedTest.source_code}/>
+                </Grid>
+                <Grid item xs={6}>
+                    <BasicCodeEditor source_code={amplifiedTest.original_test.source_code}/>
+                </Grid>
             </Grid>
         </>
     );

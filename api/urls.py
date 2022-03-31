@@ -11,6 +11,7 @@ router.register('jobs', views.JobViewSet)
 router.register('files', views.FileViewSet)
 router.register('mutations', views.MutationViewSet)
 router.register('projects', views.ProjectViewSet)
+router.register('test_amp', views.TestAmpViewSet)
 
 
 urlpatterns: list = router.urls

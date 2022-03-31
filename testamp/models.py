@@ -44,6 +44,7 @@ class TestCase(Timestampable):
     new_coverage = models.JSONField(default=list)
     original_test = models.JSONField(default=dict)
 
-    # def get_amplified_test_source(self):
-    #     with zipfile.ZipFile():
-    #         pass
+    def get_amplified_test_source(self):
+        with zipfile.ZipFile(self.test_suite.zip_file.file, 'r') as zip_file:
+            amp_test_source_file = zip_file.read(self.file_path)
+            return amp_test_source_file
