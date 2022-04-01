@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="truncate tables" type="DatabaseScript">
+    <data-source id="c9a40883-6c18-4e50-ae4d-96bc5439e14d" />
+    <script-text>TRUNCATE public.project CASCADE;
+TRUNCATE public.testamp_testsuite CASCADE;
+TRUNCATE public.user_profile CASCADE;</script-text>
+    <method v="2" />
+  </configuration>
+</component>

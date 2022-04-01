@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="dump live DB" type="ShConfigurationType">
+    <option name="SCRIPT_TEXT" value="/opt/homebrew/bin/pg_dump --dbname=de1hesnd1t6kra --schema=public --table=public.file --table=public.job --table=public.\&quot;mutant_coverage\&quot; --table=public.mutation --table=public.project --table=public.\&quot;project_token\&quot; --table=public.\&quot;project_user\&quot; --table=public.\&quot;testamp_testampzipfile\&quot; --table=public.\&quot;testamp_testcase\&quot; --table=public.\&quot;testamp_testsuite\&quot; --table=public.\&quot;user_profile\&quot; --inserts --data-only --file=$PROJECT_DIR$/storage/live-data-dump-out.sql --username=hpxeuyirmmyfuv --host=ec2-63-33-239-176.eu-west-1.compute.amazonaws.com --port=5432" />
+    <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+    <option name="SCRIPT_PATH" value="" />
+    <option name="SCRIPT_OPTIONS" value="" />
+    <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+    <option name="INTERPRETER_PATH" value="/bin/zsh" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="EXECUTE_IN_TERMINAL" value="true" />
+    <option name="EXECUTE_SCRIPT_FILE" value="false" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
