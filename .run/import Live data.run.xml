@@ -2,7 +2,7 @@
   <configuration default="false" name="import Live data" type="DatabaseScript">
     <script-file value="$PROJECT_DIR$/storage/live-data-dump-out.sql" />
     <script-mode>FILE</script-mode>
-    <data-source id="c9a40883-6c18-4e50-ae4d-96bc5439e14d" />
+    <data-source id="5c411e65-bea9-4430-b6a0-3478d3d5e705" />
     <method v="2">
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="truncate tables" run_configuration_type="DatabaseScript" />
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="dump live DB" run_configuration_type="ShConfigurationType" />

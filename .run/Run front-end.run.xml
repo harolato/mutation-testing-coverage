@@ -6,7 +6,7 @@
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
       <env name="DJANGO_SETTINGS_MODULE" value="config.settings" />
-      <env name="DATABASE_URL" value="pgsql://postgres:pass@127.0.0.1:5432/mutation" />
+      <env name="DATABASE_URL" value="pgsql://postgres@127.0.0.1:5435/mutation" />
       <env name="SECURE_SSL_REDIRECT" value="False" />
       <env name="REDIS_URL" value="redis://127.0.0.1:6379" />
       <env name="AWS_ACCESS_KEY_ID" value="AKIAYHFBIQMAN6A35X7O" />
@@ -14,9 +14,9 @@
       <env name="DEBUG_" value="0" />
       <env name="USE_S3" value="false" />
     </envs>
-    <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
+    <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="" />
-    <option name="IS_MODULE_SDK" value="false" />
+    <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="net.ashald.envfile">

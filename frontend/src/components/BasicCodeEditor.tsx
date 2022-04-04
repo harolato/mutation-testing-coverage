@@ -16,7 +16,9 @@ import IContentWidget = editor.IContentWidget;
 import {SourceCode} from "../types/SourceCode";
 
 interface BasicCodeEditorProps {
-    source_code: SourceCode
+    source_code: SourceCode,
+    readonly ?: boolean,
+    onChangeHandler ?: any
 }
 
 const BasicCodeEditor = (props: BasicCodeEditorProps) => {
@@ -50,7 +52,7 @@ const BasicCodeEditor = (props: BasicCodeEditorProps) => {
         minimap: {
             enabled: false
         },
-        readOnly: false,
+        readOnly: props.readonly ?? false,
     };
 
 
@@ -63,6 +65,7 @@ const BasicCodeEditor = (props: BasicCodeEditorProps) => {
         <>
             <MonacoEditor
                 height="50vh"
+                onChange={props.onChangeHandler}
                 options={options}
                 language={props.source_code.file_type.id}
                 value={props.source_code.source}

@@ -47,4 +47,7 @@ class TestCase(Timestampable):
     def get_amplified_test_source(self):
         with zipfile.ZipFile(self.test_suite.zip_file.file, 'r') as zip_file:
             amp_test_source_file = zip_file.read(self.file_path)
-            return amp_test_source_file
+            source = str(amp_test_source_file, 'utf-8')
+            source_split = source.split('\n')
+            source_split = source_split[self.start_line:self.end_line-1]
+            return "\n".join(source_split)

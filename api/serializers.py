@@ -21,13 +21,20 @@ class AmpTestSerializer(serializers.ModelSerializer):
         if 'request' in self.context and 'view' in self.context and type(self.context['view']) is TestAmpViewSet:
             job = test_case.test_suite.job
             project = job.project
-            test_case.original_test['source_code'] = get_github_source_code(
+            source_code = get_github_source_code(
                 project.git_repo_owner,
                 project.git_repo_name,
                 job.git_commit_sha,
                 project.owner.user_profile.access_token,
                 test_case.original_test['filename']
             )
+
+            src = source_code['source'].split('\n')[
+                  test_case.original_test['fromline']-100:test_case.original_test['toline']-101]
+            source_code['source'] = "\n".join(src)
+
+            test_case.original_test['source_code'] = source_code
+
         return test_case.original_test
 
     def get_source_code(self, test_case: TestCase):
@@ -35,7 +42,6 @@ class AmpTestSerializer(serializers.ModelSerializer):
         if 'request' in self.context and 'view' in self.context and type(self.context['view']) is TestAmpViewSet:
             return display_source_code(test_case.get_amplified_test_source(), test_case.file_path)
         return None
-
 
 
 class MutantCoverageSerializer(serializers.ModelSerializer):

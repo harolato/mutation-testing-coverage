@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework.routers import SimpleRouter
 
 from api import views
+from api.views import SubmitAmpTestView
 
 app_name = 'api'
 
@@ -16,6 +17,7 @@ router.register('test_amp', views.TestAmpViewSet)
 
 urlpatterns: list = router.urls
 
+urlpatterns.append(path('submit_amp_test/', SubmitAmpTestView.as_view()))
 urlpatterns.append(path('user/', views.UserViewSet.as_view()))
 urlpatterns.append(path('testamplification/', views.SubmitTestAmpView.as_view()))
 urlpatterns.append(path('profile/', views.ProfileViewSet.as_view()))

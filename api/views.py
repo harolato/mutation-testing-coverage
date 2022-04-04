@@ -4,11 +4,12 @@ import os
 from difflib import unified_diff
 from json import JSONDecodeError
 
+import requests
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from github import Github
 from github.GithubException import BadCredentialsException
 
@@ -42,9 +43,9 @@ class JobViewSet(viewsets.ModelViewSet):
                 serializer.create(serializer.validated_data)
             except ValueError as error:
                 return Response(data={'status': 'error', 'error': str(error)}, status=400)
-            return Response({'status': 'OK'}, status=200)
+            return Response({'status': True}, status=200)
         else:
-            return Response(data={'status': 'error', 'error': serializer.errors}, status=400)
+            return Response(data={'status': False, 'error': serializer.errors}, status=400)
 
     def retrieve(self, request, *args, **kwargs):
         job = self.get_object()
@@ -340,3 +341,22 @@ class TestAmpViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+
+class SubmitAmpTestView(APIView):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
+
+    @json_response_exception()
+    def post(self, request: Request, *args, **kwargs):
+        user: User = self.request.user
+        data = request.data
+        if not user.id:
+            raise AppException('error perm')
+        if not data.get('test_name'):
+            raise AppException("Incorrect name")
+        if not data.get('source_code'):
+            raise AppException("Missing source code")
+
+        return Response(data={'status': True})
