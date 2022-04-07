@@ -41,6 +41,7 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
         run_id = uuid.uuid4()
 
         test_case.evaluation_workflow_uuid = run_id
+        test_case.save()
 
         gh.get_repo(gh_repo_path).get_workflow('mutalkCI.yml').create_dispatch(ref='master', inputs={
             'id': str(run_id)
