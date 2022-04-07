@@ -419,5 +419,5 @@ class NotificationConsumerView(APIView):
 
             return JsonResponse(data={'status': True})
         except Exception as e:
-            return JsonResponse(data={'status': False, 'error': str(e)})
+            return JsonResponse(data={'status': False, 'error': str(e)}, status=401)
 
