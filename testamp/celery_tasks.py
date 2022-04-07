@@ -23,9 +23,8 @@ from testamp.models import TestCase
 
 @shared_task
 def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: int):
-    pk = open(os.path.dirname(__file__) + '/../storage/testamp-testing.2022-04-04.private-key.pem')
     git_integration = GithubIntegration(integration_id=os.environ.get('GH_BOT_ID'),
-                                        private_key=pk.read())
+                                        private_key=os.environ.get('GH_BOT_PK'))
     try:
         test_case_workflow_data = {}
         user: User = User.objects.get(pk=user_id)
