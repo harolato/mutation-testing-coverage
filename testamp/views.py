@@ -1,11 +1,11 @@
 from channels.layers import get_channel_layer
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from asgiref.sync import async_to_sync
 from testamp.celery_tasks import evaluate_edited_test_amp_file
 
 
-def debug(request):
-    evaluate_edited_test_amp_file.delay(32, 4, 1)
+def debug(request: HttpRequest):
+    evaluate_edited_test_amp_file.delay(request.GET.get('test_case_id', 1), request.GET.get('project_id', 1), request.GET.get('user_id', 1))
     return HttpResponse('TESTR')
 
 
