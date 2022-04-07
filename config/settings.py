@@ -39,6 +39,9 @@ DEBUG = strtobool(os.environ.get('DEBUG', 'true'))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'github.com']
 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'https://mutation-testing-coverage.herokuapp.com']
+
+
 USE_S3 = strtobool(os.environ.get('USE_S3', 'true'))
 
 if not DEBUG or USE_S3:
