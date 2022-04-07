@@ -6,29 +6,45 @@ import BasicCodeEditor from "../components/BasicCodeEditor";
 import {useLoading} from "../providers/LoadingStateProvider";
 import Cookies from "js-cookie";
 import {AjaxResponse} from "../types/AjaxResponse";
+import {SourceCode} from "../types/SourceCode";
+import ConfirmationDialog from "../components/ConfirmationDialog";
+
+let ampTestInitial:SourceCode = {
+    source: '',
+    file_type: {
+        extensions: [],
+        aliases: [],
+        id: ''
+    },
+    total_lines: 0
+}
 
 const TestAmpPage = () => {
     const [state, dispatch] = useGlobalState();
     const {loading, setLoading} = useLoading();
     const [amplifiedTest, setamplifiedTest] = useState(null);
+    const [openConfirmation, setOpenConfirmation] = useState(false);
     let {amplifiedTestId} = useParams();
 
     const [testName, setTestName] = useState('')
-    const [ampTestSource, setAmpTestSource] = useState('')
+    const [ampTestSource, setAmpTestSource] = useState(ampTestInitial)
 
     useEffect(() => {
         fetch(`/api/v1/test_amp/${amplifiedTestId}/`)
             .then(response => response.json())
             .then((response_json) => {
                 setamplifiedTest(response_json)
-                setAmpTestSource(response_json.source_code.source);
+                setAmpTestSource(response_json.source_code);
                 setTestName(response_json.test_name)
                 setLoading(false)
             });
     }, [amplifiedTestId])
 
     let codeChangedHandler = (changed_content: string) => {
-        setAmpTestSource(changed_content)
+        setAmpTestSource({
+            ...ampTestSource,
+            source: changed_content
+        })
     }
 
     let submitAmpTest = () => {
@@ -42,7 +58,7 @@ const TestAmpPage = () => {
             body: JSON.stringify({
                 amp_test_id: amplifiedTestId,
                 test_name: testName,
-                source_code: ampTestSource
+                source_code: ampTestSource.source
             })
         })
             .then(json => json.json())
@@ -74,6 +90,9 @@ const TestAmpPage = () => {
 
     if (!amplifiedTest) return null;
 
+    let resetToOriginalAmpTestSource = () => {
+        console.log('confirmed')
+    };
     return (
         <>
             <Grid container columns={12} spacing={10} sx={{mb: 2}} justifyContent={"space-between"}>
@@ -89,7 +108,7 @@ const TestAmpPage = () => {
             <Grid container spacing={2}>
                 <Grid item xs={6}>
                     <BasicCodeEditor
-                        source_code={amplifiedTest.source_code}
+                        source_code={ampTestSource}
                         onChangeHandler={codeChangedHandler}
                     />
                 </Grid>
@@ -108,11 +127,28 @@ const TestAmpPage = () => {
                         color={"primary"}>
                         Evaluate & Push
                     </Button>
+                    <Button
+                        sx={{
+                            ml:3
+                        }}
+                        onClick={() => setOpenConfirmation(true)}
+                        variant={"contained"}
+                        color={"error"}>
+                        Reset to original
+                    </Button>
                 </Grid>
                 <Grid item xs={6}>
                     Errors....
                 </Grid>
             </Grid>
+            <ConfirmationDialog
+                title={"Reset source code?"}
+                open={openConfirmation}
+                setOpen={setOpenConfirmation}
+                onConfirm={resetToOriginalAmpTestSource}
+            >
+                Are you sure you want to reset your edited amplified test source code? Action is irreversible.
+            </ConfirmationDialog>
         </>
     );
 }

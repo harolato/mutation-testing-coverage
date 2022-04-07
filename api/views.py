@@ -1,10 +1,14 @@
 # Create your views here.
 import json
 import os
+import time
+import zipfile
 from difflib import unified_diff
 from json import JSONDecodeError
 
 import requests
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -24,7 +28,7 @@ from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
     UserSerializer, ProfileSerializer, ProfileUpdateSerializer, MutantCoverageSerializer, AmpTestSerializer
-from config.utils import json_response_exception, AppException
+from config.utils import json_response_exception, AppException, display_source_code
 from job.models import Job, File, Mutation, Project, Profile, MutantCoverage
 from testamp.models import TestSuite, TestCase, TestAmpZipFile
 
@@ -359,4 +363,61 @@ class SubmitAmpTestView(APIView):
         if not data.get('source_code'):
             raise AppException("Missing source code")
 
-        return Response(data={'status': True})
+        test_case = TestCase.objects.get(pk=data.get('amp_test_id'))
+
+        test_case.amplified_test_source = display_source_code(data.get('source_code'), test_case.file_path)
+        test_case.save()
+
+        # if type(data.get('source_code')) is not str:
+        #     new_source_code = str(data.get('source_code'), 'utf-8').split('\n')
+        # else:
+        #     new_source_code = data.get('source_code').split('\n')
+        #
+        # zip_file_path = test_case.test_suite.zip_file.file
+        # with zipfile.ZipFile(zip_file_path, 'a') as in_zip_file:
+        #     with in_zip_file.open(test_case.file_path) as amp_test_file:
+        #         amp_test_source_file = amp_test_file.read()
+        #         amp_test_source_file = str(amp_test_source_file, 'utf-8').split("\n")
+        #         del amp_test_source_file[test_case.start_line:test_case.end_line]
+        #         first_half = amp_test_source_file[:test_case.start_line]
+        #         second_half = amp_test_source_file[test_case.start_line + 1:]
+        #         first_half.extend(new_source_code)
+        #         first_half.extend(second_half)
+        #         amp_test_source_file = first_half
+        #         test_case.amplified_test_source = display_source_code("\n".join(amp_test_source_file),
+        #                                                               test_case.file_path)
+        #         test_case.save()
+
+        return JsonResponse(data={'status': True})
+
+
+class NotificationConsumerView(APIView):
+    authentication_classes = (SimpleTokenAuth,)
+    http_method_names = ['post']
+
+    def post(self, request: Request):
+        try:
+            test_case = TestCase.objects.get(evaluation_workflow_uuid=request.data.get('id'))
+            test_case.evaluation_workflow_data['message'] = request.data.get('message')
+            test_case.evaluation_workflow_data['success'] = request.data.get('success', False)
+            test_case.save()
+            layer = get_channel_layer()
+            async_to_sync(layer.group_send)(f'user_{request.auth.pk}', {
+                'type': 'event_notify',
+                'content': {
+                    'type': 'evaluation-notification-from-workflow',
+                    'status': 'Evaluation has been completed',
+                    'data': {
+                        'message': test_case.evaluation_workflow_data['message'],
+                        'success': test_case.evaluation_workflow_data['success'],
+                        'workflow_run_id': test_case.evaluation_workflow_data.get('workflow_run_id', None),
+                        'task_UID': str(test_case.evaluation_workflow_uuid),
+                    },
+                    'timestamp': time.time()
+                }
+            })
+
+            return JsonResponse(data={'status': True})
+        except Exception as e:
+            return JsonResponse(data={'status': False, 'error': str(e)})
+

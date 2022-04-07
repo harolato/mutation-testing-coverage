@@ -8,6 +8,23 @@ const LoadDataComponent = () => {
     const [state, dispatch] = useGlobalState();
     const {loading, setLoading} = useLoading();
     let {fileId, projectId, jobId} = useParams();
+
+    useEffect(() => {
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws/notifications/");
+        ws.onopen = (event:Event) => {
+            console.log('open', event)
+        }
+        ws.onclose = (event:Event) => {
+            console.log('close', event)
+        }
+        ws.onmessage = (event:Event) => {
+            console.log('message', event)
+        }
+        ws.onerror = (event:Event) => {
+            console.log('error', event)
+        }
+    }, [])
+
     useEffect(() => {
 
         setLoading(true);

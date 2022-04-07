@@ -40,7 +40,10 @@ class AmpTestSerializer(serializers.ModelSerializer):
     def get_source_code(self, test_case: TestCase):
         from api.views import TestAmpViewSet
         if 'request' in self.context and 'view' in self.context and type(self.context['view']) is TestAmpViewSet:
-            return display_source_code(test_case.get_amplified_test_source(), test_case.file_path)
+            if 'source' in test_case.amplified_test_source and int(test_case.amplified_test_source['total_lines']) > 0:
+                return display_source_code(test_case.amplified_test_source['source'], test_case.file_path)
+            else:
+                return display_source_code(test_case.get_amplified_test_source(), test_case.file_path)
         return None
 
 

@@ -10,10 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+import pickle
 from distutils.util import strtobool
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from subprocess import Popen, PIPE
+
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -53,7 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Libs
-    # 'channels',
+    'channels',
     'rest_framework',
 
     # Internal apps
@@ -104,8 +107,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
-# ASGI_APPLICATION = 'config.asgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -167,17 +170,18 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
 
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_IGNORE_RESULT = True
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IGNORE_RESULT = True
+CELERY_TASK_ALWAYS_EAGER = True
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("127.0.0.1", 6379)],
-#         },
-#     },
-# }
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 
 sentry_sdk.init(

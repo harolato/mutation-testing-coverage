@@ -24,6 +24,9 @@ def json_response_exception():
             except AppException as e:
                 return_data = {'status': False, 'error': e.__str__(), 'data': e.exception_data}
                 return JsonResponse(data=return_data, status=400)
+            # except Exception as e:
+            #     return_data = {'status': False, 'error': e.__str__(), 'data': 'Internal Error'}
+            #     return JsonResponse(data=return_data, status=500)
 
         return applicator
 
