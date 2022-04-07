@@ -26,7 +26,6 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
     git_integration = GithubIntegration(integration_id=os.environ.get('GH_BOT_ID'),
                                         private_key=os.environ.get('GH_BOT_PK'))
     try:
-        test_case_workflow_data = {}
         user: User = User.objects.get(pk=user_id)
         layer = get_channel_layer()
 
@@ -81,7 +80,7 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
         if attempts <= 0:
             raise Exception('Attempts exceeded. Try again.')
 
-        test_case_workflow_data['workflow_run_id'] = workflow_run_id
+        test_case.evaluation_workflow_data['workflow_run_id'] = workflow_run_id
 
         async_to_sync(layer.group_send)(f'user_{user_id}', {
             'type': 'event_notify',
@@ -127,7 +126,7 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
             if elapsed > timeout:
                 raise Exception('Evaluation time-out (20minutes). Contact admin or try again.')
 
-        test_case_workflow_data['success'] = False if workflow.conclusion.lower() != 'success' else True
+        test_case.evaluation_workflow_data['success'] = False if workflow.conclusion.lower() != 'success' else True
 
         async_to_sync(layer.group_send)(f'user_{user_id}', {
             'type': 'event_notify',
@@ -135,7 +134,7 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
                 'type': 'evaluation',
                 'status': 'Evaluation has been completed',
                 'data': {
-                    'success': test_case_workflow_data['success'],
+                    'success': test_case.evaluation_workflow_data['success'],
                     'workflow_run_id': workflow_run_id,
                     'task_UID': str(run_id),
                     'gh': [gh_repo_path, installation.id],
@@ -144,8 +143,6 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
                 'timestamp': time.time()
             }
         })
-
-        test_case.evaluation_workflow_data = test_case_workflow_data
         test_case.save()
 
     except Exception as e:
