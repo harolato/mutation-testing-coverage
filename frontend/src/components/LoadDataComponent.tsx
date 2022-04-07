@@ -10,7 +10,12 @@ const LoadDataComponent = () => {
     let {fileId, projectId, jobId} = useParams();
 
     useEffect(() => {
-        const ws = new WebSocket("ws://127.0.0.1:8000/ws/notifications/");
+        let protocol = 'ws';
+        if (location.protocol === 'https:') {
+            protocol = 'wss'
+        }
+        let ws_url = `${protocol}://${window.location.host}`;
+        const ws = new WebSocket(`${ws_url}/ws/notifications/`);
         ws.onopen = (event:Event) => {
             console.log('open', event)
         }
