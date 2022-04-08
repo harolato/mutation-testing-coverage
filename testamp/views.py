@@ -1,3 +1,5 @@
+import time
+
 from channels.layers import get_channel_layer
 from django.http import HttpResponse, HttpRequest
 from asgiref.sync import async_to_sync
@@ -12,13 +14,17 @@ def debug(request: HttpRequest):
 def ws_test(request):
     layer = get_channel_layer()
     async_to_sync(layer.group_send)(f'user_{1}', {
-        'type': 'event_notify',
-        'content': {
-            'complex': 'json_test',
-            'comples': {
-                'very': 'complex'
+            'type': 'event_notify',
+            'content': {
+                'type': 'evaluation',
+                'status': 'Evaluation TEst',
+                'data': {
+                    'success': False,
+                    'workflow_run_id': 123345,
+                    'task_UID': 321532462,
+                },
+                'timestamp': time.time()
             }
-        }
-    })
+        })
 
     return HttpResponse('WS TEST')

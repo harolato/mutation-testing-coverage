@@ -23,6 +23,7 @@ const initialState: GlobalStateType = {
     file: null,
 
     // Computed
+    evaluation_status: {},
     mutant: null,
     selected_line_mutations: [],
     mutants: []

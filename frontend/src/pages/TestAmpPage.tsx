@@ -93,6 +93,8 @@ const TestAmpPage = () => {
     let resetToOriginalAmpTestSource = () => {
         console.log('confirmed')
     };
+
+
     return (
         <>
             <Grid container columns={12} spacing={10} sx={{mb: 2}} justifyContent={"space-between"}>
@@ -138,7 +140,9 @@ const TestAmpPage = () => {
                     </Button>
                 </Grid>
                 <Grid item xs={6}>
-                    Errors....
+                    <p>{state.evaluation_status?.status}</p>
+                    <p>{state.evaluation_status?.data?.success === true ? "Result: Success" : "Result: Failure"}</p>
+                    <p>{state.evaluation_status?.data?.message }</p>
                 </Grid>
             </Grid>
             <ConfirmationDialog

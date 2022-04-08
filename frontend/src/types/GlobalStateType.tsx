@@ -19,6 +19,7 @@ export type GlobalStateType = {
     mutant: Mutation | null,
     mutants: Mutation[],
     selected_line_mutations: Mutation[],
+    evaluation_status: any
 }
 
 export type NotificationToastType = {

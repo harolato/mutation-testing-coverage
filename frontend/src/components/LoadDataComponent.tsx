@@ -22,8 +22,16 @@ const LoadDataComponent = () => {
         ws.onclose = (event:Event) => {
             console.log('close', event)
         }
-        ws.onmessage = (event:Event) => {
-            console.log('message', event)
+        ws.onmessage = (event:MessageEvent) => {
+            const json_data = JSON.parse(event.data)?.content;
+            console.log(json_data)
+            if ( json_data.type === 'evaluation' ) {
+
+                dispatch({
+                    ...state,
+                    evaluation_status : json_data
+                });
+            }
         }
         ws.onerror = (event:Event) => {
             console.log('error', event)

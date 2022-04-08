@@ -24,6 +24,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from testamp.celery_tasks import evaluate_edited_test_amp_file
+
 from api.authentication import SimpleTokenAuth
 from api.serializers import JobSerializer, \
     ListProjectSerializer, DetailProjectSerializer, BasicJobSerializer, FileSerializer, MutationSerializer, \
@@ -367,6 +369,8 @@ class SubmitAmpTestView(APIView):
 
         test_case.amplified_test_source = display_source_code(data.get('source_code'), test_case.file_path)
         test_case.save()
+
+        evaluate_edited_test_amp_file.delay(test_case.pk, test_case.test_suite.job.project.pk, user.pk)
 
         # if type(data.get('source_code')) is not str:
         #     new_source_code = str(data.get('source_code'), 'utf-8').split('\n')
