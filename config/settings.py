@@ -117,7 +117,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=500, default='pgsql://postgres:pass@127.0.0.1:5432/mutation')
+    'default': dj_database_url.config(conn_max_age=500)
 }
 
 # DATABASES = {
@@ -175,7 +175,7 @@ LOGIN_URL = 'login'
 
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IGNORE_RESULT = True
-CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = False
 
 CHANNEL_LAYERS = {
     "default": {

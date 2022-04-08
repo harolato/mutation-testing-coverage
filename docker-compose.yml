@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:5-alpine
+    container_name: local_redis
+    restart: on-failure
+    hostname: redis
+    ports:
+      - "6379:6379"
