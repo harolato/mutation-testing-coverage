@@ -11,10 +11,15 @@ from testamp.models import TestCase, TestSuite
 class AmpTestSerializer(serializers.ModelSerializer):
     source_code = serializers.SerializerMethodField()
     original_test = serializers.SerializerMethodField()
+    project_id = serializers.SerializerMethodField()
 
     class Meta:
         model = TestCase
         exclude = ()
+
+    def get_project_id(self, test_case: TestCase):
+        project = test_case.test_suite.job.project
+        return project.pk
 
     def get_original_test(self, test_case: TestCase):
         from api.views import TestAmpViewSet
@@ -30,7 +35,7 @@ class AmpTestSerializer(serializers.ModelSerializer):
             )
 
             src = source_code['source'].split('\n')[
-                  test_case.original_test['fromline']-100:test_case.original_test['toline']-101]
+                  test_case.original_test['fromline'] - 100:test_case.original_test['toline'] - 101]
             source_code['source'] = "\n".join(src)
 
             test_case.original_test['source_code'] = source_code

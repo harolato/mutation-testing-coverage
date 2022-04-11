@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import JsonResponse, HttpRequest
-from github import Github
+from github import Github, GithubIntegration
 from github.GithubException import BadCredentialsException
 
 from rest_framework import viewsets
@@ -425,3 +425,28 @@ class NotificationConsumerView(APIView):
         except Exception as e:
             return JsonResponse(data={'status': False, 'error': str(e)}, status=401)
 
+
+class SubmitAmpTestPRView(APIView):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
+
+    @json_response_exception()
+    def post(self, request: Request, *args, **kwargs):
+        user: User = self.request.user
+        data = request.data
+        amp_test_case = TestCase.objects.get(pk=data['amp_test_id'])
+        project = amp_test_case.test_suite.job.project
+        git_integration = GithubIntegration(integration_id=os.environ.get('GH_BOT_ID'),
+                                            private_key=os.environ.get('GH_BOT_PK'))
+        gh_repo_path = f'{project.git_repo_owner}/{project.git_repo_name}'
+        installation = git_integration.get_installation(project.git_repo_owner, project.git_repo_name)
+        access_token = git_integration.get_access_token(installation_id=installation.id)
+        gh = Github(login_or_token=access_token.token)
+        gh.get_repo(gh_repo_path).create_pull(
+            title="title",
+            body="twst",
+            base="",
+            head="",
+        )
+        return Response()

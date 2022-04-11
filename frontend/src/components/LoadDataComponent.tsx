@@ -9,24 +9,40 @@ const LoadDataComponent = () => {
     const {loading, setLoading} = useLoading();
     let {fileId, projectId, jobId} = useParams();
 
-    useEffect(() => {
+    const wsHandler = () => {
+        console.log('ws function')
         let protocol = 'ws';
         if (location.protocol === 'https:') {
             protocol = 'wss'
         }
-        let ws_url = `${protocol}://${window.location.host}`;
+        const ws_url = `${protocol}://${window.location.host}`;
         const ws = new WebSocket(`${ws_url}/ws/notifications/`);
+        let socket_close_timer: NodeJS.Timeout = null;
         ws.onopen = (event:Event) => {
             console.log('open', event)
         }
         ws.onclose = (event:Event) => {
+            // clearInterval(socket_close_timer);
+            // socket_close_timer = setInterval(() => {
+            //     console.log('reconnecting')
+            //     wsHandler();
+            // }, 10000)
             console.log('close', event)
         }
         ws.onmessage = (event:MessageEvent) => {
             const json_data = JSON.parse(event.data)?.content;
-            console.log(json_data)
+            if ( json_data?.data?.success ) {
+                dispatch({
+                    ...state,
+                    notification_toast: {
+                        open: true,
+                        type: 'success',
+                        message: "Test amplification evaluation has been successfully completed. Return to test" +
+                            " amplification page to resume work and submit PR."
+                    }
+                });
+            }
             if ( json_data.type === 'evaluation' ) {
-
                 dispatch({
                     ...state,
                     evaluation_status : json_data
@@ -36,6 +52,10 @@ const LoadDataComponent = () => {
         ws.onerror = (event:Event) => {
             console.log('error', event)
         }
+    }
+
+    useEffect(() => {
+        wsHandler();
     }, [])
 
     useEffect(() => {

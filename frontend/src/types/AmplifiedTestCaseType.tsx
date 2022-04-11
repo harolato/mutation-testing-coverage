@@ -2,6 +2,7 @@ import {SourceCode} from "./SourceCode";
 
 export type AmplifiedTestCaseType = {
     id: number;
+    project_id: number;
     source_code: SourceCode;
     created_at: Date;
     test_name: string;

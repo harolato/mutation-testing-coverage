@@ -5,7 +5,6 @@ from asgiref.sync import async_to_sync
 
 class NotificationsConsumer(JsonWebsocketConsumer):
     def connect(self):
-        print(self.scope['user'].is_anonymous)
         if self.scope['user'].is_anonymous:
             self.close()
         else:
@@ -18,6 +17,7 @@ class NotificationsConsumer(JsonWebsocketConsumer):
             self.send_json({
                 "content": f'etasdasd USER {self.group_name} {self.channel_name}'
             })
+            print(self.group_name)
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
@@ -31,6 +31,7 @@ class NotificationsConsumer(JsonWebsocketConsumer):
         self.send_json(content)
 
     def event_notify(self, event):
+        print('notifyt')
         self.send_json({
             "content": event['content']
         })

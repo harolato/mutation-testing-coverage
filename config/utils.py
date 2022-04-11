@@ -1,4 +1,3 @@
-import copy
 import json
 import os
 import re
@@ -6,6 +5,7 @@ from typing import Union
 
 from django.db import models
 from django.http import JsonResponse
+from github import GithubIntegration, Github
 
 
 class Timestampable(models.Model):
@@ -67,3 +67,15 @@ def display_source_code(source_code: Union[str, bytes], file_path: str):
         'file_type': get_file_source_language(file_path),
         'total_lines': source_code.count('\n')
     }
+
+
+def github_bot_init(project) -> Github:
+    git_integration = GithubIntegration(integration_id=os.environ.get('GH_BOT_ID'),
+                                        private_key=os.environ.get('GH_BOT_PK'))
+    installation = git_integration.get_installation(project.git_repo_owner, project.git_repo_name)
+    access_token = git_integration.get_access_token(installation_id=installation.id)
+    return Github(login_or_token=access_token.token)
+
+
+def github_repo_path(project) -> str:
+    return f'{project.git_repo_owner}/{project.git_repo_name}'

@@ -1,12 +1,6 @@
-import functools
 import os
-import re
 import time
 import uuid
-import zipfile
-from contextlib import suppress
-from io import BytesIO
-from operator import itemgetter
 from typing import List
 
 import requests
@@ -31,16 +25,53 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
 
         test_case = TestCase.objects.get(pk=test_case_id)
 
+        run_id = uuid.uuid4()
+
+        test_case.evaluation_workflow_uuid = run_id
+        test_case.evaluation_workflow_data['success'] = True
+        test_case.evaluation_workflow_data['completed'] = True
+        test_case.evaluation_workflow_data['workflow_run_id'] = 321123
+        test_case.save()
+
+        async_to_sync(layer.group_send)(f'user_{user_id}', {
+            'type': 'event_notify',
+            'content': {
+                'type': 'evaluation',
+                'completed': False,
+                'running': True,
+                'status': 'Task initiated... waiting for ID',
+                'data': {
+                    'task_UID': str(run_id),
+                },
+                'timestamp': time.time()
+            }
+        })
+
+        time.sleep(5)
+
+        async_to_sync(layer.group_send)(f'user_{user_id}', {
+            'type': 'event_notify',
+            'content': {
+                'type': 'evaluation',
+                'status': 'Evaluation has been completed',
+                'success': True,
+                'completed': True,
+                'running': False,
+                'data': {
+                    'workflow_run_id': test_case.evaluation_workflow_data['workflow_run_id'],
+                    'task_UID': str(run_id),
+                },
+                'timestamp': time.time()
+            }
+        })
+
+        return True
+
         project: Project = Project.objects.get(pk=project_id)
         gh_repo_path = f'{project.git_repo_owner}/{project.git_repo_name}'
         installation = git_integration.get_installation(project.git_repo_owner, project.git_repo_name)
         access_token = git_integration.get_access_token(installation_id=installation.id)
         gh = Github(login_or_token=access_token.token)
-
-        run_id = uuid.uuid4()
-
-        test_case.evaluation_workflow_uuid = run_id
-        test_case.save()
 
         gh.get_repo(gh_repo_path).get_workflow('mutalkCI.yml').create_dispatch(ref='master', inputs={
             'id': str(run_id)
@@ -126,7 +157,7 @@ def evaluate_edited_test_amp_file(test_case_id: int, project_id: int, user_id: i
             if elapsed > timeout:
                 raise Exception('Evaluation time-out (20minutes). Contact admin or try again.')
 
-        test_case.evaluation_workflow_data['success'] = False if workflow.conclusion.lower() != 'success' else True
+        test_case.evaluation_workflow_data['success'] = not False if workflow.conclusion.lower() != 'success' else True
 
         async_to_sync(layer.group_send)(f'user_{user_id}', {
             'type': 'event_notify',
