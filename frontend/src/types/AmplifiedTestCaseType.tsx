@@ -1,4 +1,5 @@
 import {SourceCode} from "./SourceCode";
+import {User} from "./UserType";
 
 export type AmplifiedTestCaseType = {
     id: number;
@@ -11,6 +12,11 @@ export type AmplifiedTestCaseType = {
     start_line: number;
     end_line: number;
     new_coverage: [];
+    evaluation_workflow_data: any;
+    evaluation_workflow_uuid: any;
+    pull_request_created_by_id: number;
+    pull_request_data: any;
+    pull_request_id: number;
     original_test: {
         testname: string;
         test_fullname: string;

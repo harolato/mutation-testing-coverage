@@ -2,6 +2,7 @@ import os
 import uuid
 import zipfile
 
+from django.contrib.auth.models import User
 from django.db import models
 
 from config.utils import Timestampable
@@ -48,6 +49,10 @@ class TestCase(Timestampable):
 
     evaluation_workflow_data = models.JSONField(default=dict)
     evaluation_workflow_uuid = models.UUIDField(null=True, default=None)
+
+    pull_request_id = models.PositiveIntegerField(default=None, null=True)
+    pull_request_data = models.JSONField(default=dict)
+    pull_request_created_by = models.OneToOneField(User, on_delete=models.CASCADE, null=True, default=None)
 
     def get_amplified_test_source(self):
         with zipfile.ZipFile(self.test_suite.zip_file.file, 'r') as zip_file:

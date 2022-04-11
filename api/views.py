@@ -443,10 +443,15 @@ class SubmitAmpTestPRView(APIView):
         installation = git_integration.get_installation(project.git_repo_owner, project.git_repo_name)
         access_token = git_integration.get_access_token(installation_id=installation.id)
         gh = Github(login_or_token=access_token.token)
-        gh.get_repo(gh_repo_path).create_pull(
-            title="title",
-            body="twst",
-            base="",
-            head="",
+        pull_request = gh.get_repo(gh_repo_path).create_pull(
+            title=data['title'],
+            body=data['description'],
+            base=data['branch_source'],
+            head=data['branch_target'],
         )
-        return Response()
+        amp_test_case.pull_request_id = pull_request.id
+        amp_test_case.pull_request_data = pull_request.raw_data
+        amp_test_case.save()
+        return Response(data={
+            'status': True
+        })
